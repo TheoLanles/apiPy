@@ -34,11 +34,11 @@ echo "=== GET LATEST RELEASE ==="
 # Fetch release data
 RELEASE_DATA=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
 
-# Filter for assets containing "linux" (case-insensitive)
-DOWNLOAD_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | ascii_downcase | contains("linux")) | .browser_download_url' | head -n 1)
+# Filter for assets containing "apiPy" (case-insensitive)
+DOWNLOAD_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | ascii_downcase | contains("apipy")) | .browser_download_url' | head -n 1)
 
 if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" == "null" ]; then
-  echo "❌ ERREUR: Aucun binaire Linux trouvé dans la dernière release de $REPO."
+  echo "❌ ERREUR: Aucun binaire 'apiPy' trouvé dans la dernière release de $REPO."
   echo "Assets trouvés :"
   echo "$RELEASE_DATA" | jq -r '.assets[].name' || echo "Aucun asset trouvé."
   echo ""
