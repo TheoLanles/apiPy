@@ -116,7 +116,6 @@ func StopScriptInternal(scriptID string) error {
 	}
 
 	if state.Status != "running" {
-		// If it's not running, we consider it already stopped
 		return nil
 	}
 
@@ -124,7 +123,20 @@ func StopScriptInternal(scriptID string) error {
 	manualStops.Store(scriptID, true)
 
 	// Kill the process using OS-specific helper
-	return KillProcessTree(state.PID)
+	err := KillProcessTree(state.PID)
+	
+	// Even if kill failed (e.g. process already gone), we want to "unstick" the UI
+	// If there's no running process in our map, it means streamLogs isn't running
+	// to update the status, so we must do it manually here.
+	if _, exists := runningProcesses[scriptID]; !exists {
+		now := time.Now()
+		state.Status = "stopped"
+		state.StoppedAt = &now
+		database.DB.Save(&state)
+		manualStops.Delete(scriptID)
+	}
+
+	return err
 }
 
 // RestartScriptHandler restarts a script
