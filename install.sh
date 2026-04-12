@@ -31,15 +31,18 @@ echo "=== CREATE INSTALL DIR ==="
 mkdir -p "$INSTALL_DIR"
 
 echo "=== GET LATEST RELEASE ==="
-# We look for the Linux binary specifically (usually named pyrunner-linux based on build.ps1)
-# Note: Ensure your GitHub Release asset name matches "apiPy" or update the filter below
-DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" \
-| jq -r '.assets[] | select(.name | contains("linux")) | .browser_download_url' \
-| head -n 1)
+# Fetch release data
+RELEASE_DATA=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
+
+# Filter for assets containing "linux" (case-insensitive)
+DOWNLOAD_URL=$(echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | ascii_downcase | contains("linux")) | .browser_download_url' | head -n 1)
 
 if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" == "null" ]; then
-  echo "❌ ERREUR: Aucun binaire Linux 'apiPy' trouvé dans la dernière release."
-  echo "Vérifiez que vos assets de release contiennent le mot 'linux'."
+  echo "❌ ERREUR: Aucun binaire Linux trouvé dans la dernière release de $REPO."
+  echo "Assets trouvés :"
+  echo "$RELEASE_DATA" | jq -r '.assets[].name' || echo "Aucun asset trouvé."
+  echo ""
+  echo "Assurez-vous d'avoir créé une release sur GitHub et d'y avoir uploadé le fichier 'pyrunner-linux'."
   exit 1
 fi
 
