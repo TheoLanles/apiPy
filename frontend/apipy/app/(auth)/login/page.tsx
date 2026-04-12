@@ -51,8 +51,31 @@ export default function LoginPage() {
 
   if (isLoading) {
     return (
-      <div style={{ background: "#F5F0E8" }} className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#0D5C45" }} />
+      <div
+        style={{ background: "#F5F0E8" }}
+        className="flex flex-col items-center justify-center min-h-screen animate-in fade-in duration-700"
+      >
+        <div className="flex flex-col items-center gap-6">
+          {/* Pulsing Logo Container */}
+          <div className="relative">
+            <div className="absolute inset-0 rounded-3xl bg-emerald-800/10 animate-ping duration-[2000ms]" />
+            <div
+              className="relative w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl"
+              style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
+            >
+              <img src="/logo.svg" alt="apiPy" className="w-12 h-12" />
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <span style={{ fontWeight: 800, fontSize: 24, letterSpacing: 2, color: "#0D5C45" }}>
+              apiPy
+            </span>
+            <div className="flex items-center gap-2 text-emerald-800/60 text-sm font-medium">
+              <Loader2 className="h-3 w-3 animate-spin" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
