@@ -119,7 +119,7 @@ func installDependencies(scriptID, reqPath string) {
 	SaveLog(scriptID, "Creating virtual environment (venv)...", "INFO")
 	
 	// Create venv
-	createVenvCmd := exec.Command("python", "-m", "venv", "venv")
+	createVenvCmd := exec.Command(getSystemPython(), "-m", "venv", "venv")
 	createVenvCmd.Dir = scriptDir
 	if output, err := createVenvCmd.CombinedOutput(); err != nil {
 		SaveLog(scriptID, "Failed to create virtual environment: " + string(output) + " (" + err.Error() + ")", "ERROR")

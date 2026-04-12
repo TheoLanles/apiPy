@@ -57,7 +57,7 @@ export default function NewScriptPage() {
     setIsLoading(true);
     try {
       const script = await api.uploadScript(file, name, description, reqFile || undefined);
-      router.push(`/scripts/${script.id}`);
+      router.push(`/scripts/detail?id=${script.id}`);
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to upload script");
     } finally {

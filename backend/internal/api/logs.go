@@ -20,7 +20,7 @@ func GetLogsHandler(c *gin.Context) {
 		limit = 1000
 	}
 
-	var logs []models.ScriptLog
+	logs := []models.ScriptLog{}
 	if err := database.DB.
 		Where("script_id = ?", scriptID).
 		Order("created_at DESC").
@@ -49,7 +49,7 @@ func DeleteLogsHandler(c *gin.Context) {
 func DownloadLogsHandler(c *gin.Context) {
 	scriptID := c.Param("id")
 
-	var logs []models.ScriptLog
+	logs := []models.ScriptLog{}
 	if err := database.DB.
 		Where("script_id = ?", scriptID).
 		Order("created_at ASC").

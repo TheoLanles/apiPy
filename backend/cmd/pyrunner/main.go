@@ -1,13 +1,16 @@
 package main
 
 import (
+	"io/fs"
 	"log"
 	"net/http"
+	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/theo/pyrunner/internal/api"
+	"github.com/theo/pyrunner/internal/assets"
 	"github.com/theo/pyrunner/internal/database"
 	"github.com/theo/pyrunner/internal/middleware"
 	"github.com/theo/pyrunner/internal/ws"
@@ -27,6 +30,8 @@ func main() {
 
 	// Create Gin router
 	router := gin.Default()
+	router.RedirectTrailingSlash = false
+	router.RedirectFixedPath = false
 
 	// Set max multipart upload size (100MB)
 	router.MaxMultipartMemory = 100 << 20
@@ -91,6 +96,8 @@ func main() {
 		adminSettings.Use(middleware.AdminMiddleware())
 		{
 			adminSettings.POST("", api.UpdateSettingsHandler)
+			adminSettings.POST("/test-webhook", api.TestDiscordWebhookHandler)
+			adminSettings.POST("/debug/kill-port", api.KillPortHandler)
 		}
 	}
 
@@ -101,6 +108,7 @@ func main() {
 	}
 
 	// Serve frontend assets
+	assets.ListFiles()
 	serveFrontend(router)
 
 	// Start server
@@ -110,23 +118,60 @@ func main() {
 	}
 }
 
-// serveFrontend serves the Next.js frontend
+// serveFrontend serves the Next.js frontend from embedded assets
 func serveFrontend(router *gin.Engine) {
-	// Serve _next folder (Next.js static assets)
-	router.StaticFS("/_next/static", http.Dir("./frontend/apipy/.next/static"))
+	fsys := assets.GetFS()
+	fileServer := http.FileServer(http.FS(fsys))
 
-	// Serve public folder
-	router.StaticFS("/public", http.Dir("./frontend/apipy/public"))
+	// Check if assets are loaded
+	if f, err := fsys.Open("index.html"); err != nil {
+		log.Printf("WARNING: index.html not found in embedded assets: %v", err)
+	} else {
+		f.Close()
+		log.Println("Embedded frontend assets loaded successfully")
+	}
 
-	// Serve SPA - all other routes return bootstrap HTML
 	router.NoRoute(func(c *gin.Context) {
-		// Don't serve HTML for API routes
-		if strings.HasPrefix(c.Request.URL.Path, "/api") || strings.HasPrefix(c.Request.URL.Path, "/ws") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		reqPath := c.Request.URL.Path
+
+		// 1. API and WS routes should always 404 if not matched by their groups
+		if strings.HasPrefix(reqPath, "/api") || strings.HasPrefix(reqPath, "/ws") {
+			c.JSON(404, gin.H{"error": "not found"})
 			return
 		}
 
-		// Serve index.html for SPA routing
-		c.File("./frontend/apipy/out/index.html")
+		cleanedPath := strings.TrimPrefix(reqPath, "/")
+
+		// 2. Try to serve the exact file (css, js, images, etc.)
+		if cleanedPath != "" {
+			if f, err := fsys.Open(cleanedPath); err == nil {
+				defer f.Close()
+				if info, err := f.Stat(); err == nil && !info.IsDir() {
+					fileServer.ServeHTTP(c.Writer, c.Request)
+					return
+				}
+			}
+		}
+
+		// 3. Try directory/index.html (for paths like /dashboard/ or /dashboard)
+		indexPath := path.Join(cleanedPath, "index.html")
+		if _, err := fs.Stat(fsys, indexPath); err == nil {
+			fileServer.ServeHTTP(c.Writer, c.Request)
+			return
+		}
+
+		// 4. SPA Fallback
+		// We only fallback for paths that look like "pages" (no extension or .html)
+		// This prevents serving HTML when the browser expects missing .js/.css scripts
+		ext := path.Ext(cleanedPath)
+		if ext == "" || ext == ".html" {
+			if data, err := fs.ReadFile(fsys, "index.html"); err == nil {
+				c.Data(200, "text/html; charset=utf-8", data)
+				return
+			}
+		}
+
+		// 5. Final 404 for missing static assets
+		c.Status(404)
 	})
 }

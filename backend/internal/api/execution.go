@@ -42,7 +42,7 @@ func StartScriptHandler(c *gin.Context) {
 	}
 
 	// Detect venv python
-	pythonPath := "python"
+	pythonPath := getSystemPython()
 	scriptDir := filepath.Dir(script.Path)
 	venvPython := filepath.Join(scriptDir, "venv", "Scripts", "python.exe")
 	if _, err := os.Stat(venvPython); os.IsNotExist(err) {
@@ -101,8 +101,8 @@ func StopScriptHandler(c *gin.Context) {
 		return
 	}
 
-	if state.Status != "running" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "script is not running"})
+	if state.Status != "running" && state.PID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "script is not running and has no PID"})
 		return
 	}
 
@@ -218,6 +218,8 @@ func streamLogs(scriptID string, dbScriptID string, stdout, stderr io.ReadCloser
 				state.Status = "stopped"
 			} else {
 				state.Status = "error"
+				// Kill any remaining children in the process group
+				KillProcessTree(state.PID)
 				// Send Discord alert for crash
 				go SendDiscordNotification(script.Name, "Crashed", true)
 			}

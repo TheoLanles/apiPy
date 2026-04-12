@@ -19,7 +19,7 @@ type CreateUserRequest struct {
 
 // GetUsersHandler lists all users (admin only)
 func GetUsersHandler(c *gin.Context) {
-	var users []models.User
+	users := []models.User{}
 	if err := database.DB.Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch users"})
 		return

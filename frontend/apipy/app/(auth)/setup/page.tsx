@@ -85,11 +85,7 @@ export default function SetupPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-              <rect x="2" y="8" width="18" height="5" rx="1" transform="rotate(-20 2 8)" fill="#00E676" />
-              <rect x="8" y="16" width="18" height="5" rx="1" transform="rotate(-20 8 16)" fill="#00C853" />
-            </svg>
-            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: "#0D5C45" }}>ZACT</span>
+            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: "#0D5C45" }}>apiPy</span>
           </div>
           <p style={{ fontSize: 13, color: "#4A7C65", marginTop: 4 }}>Create your admin account</p>
         </div>

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/theo/pyrunner/internal/database"
 	"github.com/theo/pyrunner/internal/models"
 )
@@ -60,4 +61,23 @@ func SendDiscordNotification(scriptName, status string, isCrash bool) {
 	if err == nil {
 		resp.Body.Close()
 	}
+}
+
+// TestDiscordWebhookHandler sends a test notification to verify settings
+func TestDiscordWebhookHandler(c *gin.Context) {
+	var settings models.Settings
+	if err := database.DB.First(&settings).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "no settings found"})
+		return
+	}
+
+	if settings.DiscordWebhookURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "webhook URL is not configured"})
+		return
+	}
+
+	// Re-use logic with a test message
+	SendDiscordNotification("Test System", "TEST - Configuration working!", false)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Test notification sent successfully"})
 }

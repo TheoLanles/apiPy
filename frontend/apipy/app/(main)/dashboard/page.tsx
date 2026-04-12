@@ -15,9 +15,9 @@ export default function DashboardPage() {
   const loadData = async () => {
     try {
       const scriptsData = await api.getScripts();
-      setScripts(scriptsData);
+      setScripts(scriptsData || []);
       const statesData: Record<string, ProcessState> = {};
-      for (const script of scriptsData) {
+      for (const script of (scriptsData || [])) {
         try {
           const state = await api.getScriptStatus(script.id);
           statesData[script.id] = state;

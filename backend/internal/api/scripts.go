@@ -39,7 +39,7 @@ func GetScriptsHandler(c *gin.Context) {
 		return
 	}
 
-	var response []ScriptResponse
+	response := []ScriptResponse{}
 	for _, s := range scripts {
 		dir := filepath.Dir(s.Path)
 		reqPath := filepath.Join(dir, "requirements.txt")

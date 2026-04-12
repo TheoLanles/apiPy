@@ -118,7 +118,7 @@ export default function ScriptsPage() {
                   {/* Left */}
                   <div className="flex-1 min-w-0">
                     <Link
-                      href={`/scripts/${script.id}`}
+                      href={`/scripts/detail?id=${script.id}`}
                       style={{ fontSize: 15, fontWeight: 600, color: "#0D5C45", textDecoration: "none" }}
                       onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
                       onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
@@ -160,7 +160,7 @@ export default function ScriptsPage() {
                       {status}
                     </span>
                     <div className="flex gap-2">
-                      <Link href={`/scripts/${script.id}`}>
+                      <Link href={`/scripts/detail?id=${script.id}`}>
                         <button
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition"
                           style={{ fontSize: 12, fontWeight: 500, color: "#0D5C45", background: "#F5F0E8", border: "1px solid #C8DDD0", cursor: "pointer" }}

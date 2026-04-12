@@ -8,7 +8,10 @@ import type {
   User,
 } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const isProd = process.env.NODE_ENV === "production";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (isProd ? "/api" : "http://localhost:8080/api");
 
 class APIClient {
   private client: AxiosInstance;
@@ -155,6 +158,11 @@ class APIClient {
     return response.data;
   }
 
+  async testDiscordWebhook() {
+    const response = await this.client.post("/settings/test-webhook");
+    return response.data;
+  }
+
   async getScriptStatus(id: string) {
     const response = await this.client.get<ProcessState>(
       `/scripts/${id}/status`
@@ -224,6 +232,11 @@ class APIClient {
       },
     });
     return response.data;
+  }
+
+  // Debug tools
+  async killProcessByPort(port: number) {
+    await this.client.post("/settings/debug/kill-port", { port });
   }
 }
 

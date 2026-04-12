@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Script, ProcessState, ScriptLog } from "@/types";
 import { Loader2, Play, Square, RotateCw, Pencil, Download, Trash2, X, Save, Package } from "lucide-react";
@@ -11,9 +11,8 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 export default function ScriptDetailClient() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
-  const params = useParams();
-  const router = useRouter();
-  const scriptId = params.id as string;
+  const searchParams = useSearchParams();
+  const scriptId = searchParams.get("id") as string;
 
   const [script, setScript] = useState<Script | null>(null);
   const [state, setState] = useState<ProcessState | null>(null);
@@ -26,9 +25,11 @@ export default function ScriptDetailClient() {
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
 
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 2000);
-    return () => clearInterval(interval);
+    if (scriptId) {
+      loadData();
+      const interval = setInterval(loadData, 2000);
+      return () => clearInterval(interval);
+    }
   }, [scriptId, editMode]);
 
   const loadData = async () => {
