@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { Loader2, Save, RefreshCw } from "lucide-react";
+import { Loader2, Save, RefreshCw, AlertTriangle } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
@@ -246,9 +246,14 @@ function ConfirmDialog({ isOpen, onClose, onConfirm, title, message }: {
         className="relative w-full max-w-md rounded-3xl p-6 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200" 
         style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
       >
-        <div className="mb-4">
-          <p className="mb-2" style={{ fontSize: 18, fontWeight: 700, color: "#0D5C45" }}>{title}</p>
-          <p style={{ fontSize: 14, color: "#4A7C65", lineHeight: 1.5 }}>{message}</p>
+        <div className="flex gap-4 mb-4">
+          <div className="shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#FEE2E2" }}>
+            <AlertTriangle size={24} style={{ color: "#DC2626" }} />
+          </div>
+          <div>
+            <p className="mb-1" style={{ fontSize: 18, fontWeight: 700, color: "#0D5C45" }}>{title}</p>
+            <p style={{ fontSize: 14, color: "#4A7C65", lineHeight: 1.5 }}>{message}</p>
+          </div>
         </div>
 
         <div className="flex gap-3 justify-end mt-7">

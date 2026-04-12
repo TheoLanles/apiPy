@@ -127,10 +127,8 @@ func RestartScriptHandler(c *gin.Context) {
 
 	// Stop if running
 	if state.Status == "running" {
-		if cmd, exists := runningProcesses[scriptID]; exists {
-			cmd.Process.Kill()
-			delete(runningProcesses, scriptID)
-		}
+		KillProcessTree(state.PID)
+		delete(runningProcesses, scriptID)
 	}
 
 	// Small delay
