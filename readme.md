@@ -35,7 +35,17 @@ PyRunner is a modern, high-performance web dashboard designed to manage, execute
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Linux Deployment (Debian/Ubuntu)
+
+If you are on a Linux server, you can deploy **apiPy** instantly with this one-liner:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/TheoLanles/apiPy/main/install.sh | sudo bash
+```
+
+---
+
+## 🚀 Getting Started (Manual)
 
 ### Prerequisites
 - [Go](https://go.dev/doc/install) (v1.21 or higher)
