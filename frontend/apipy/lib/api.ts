@@ -148,6 +148,16 @@ class APIClient {
     return response.data;
   }
 
+  async bulkStartScripts(ids: string[]) {
+    const response = await this.client.post("/scripts/bulk/start", { ids });
+    return response.data;
+  }
+
+  async bulkStopScripts(ids: string[]) {
+    const response = await this.client.post("/scripts/bulk/stop", { ids });
+    return response.data;
+  }
+
   async getSettings() {
     const response = await this.client.get<Settings>("/settings");
     return response.data;

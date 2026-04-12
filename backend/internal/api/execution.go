@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -22,23 +23,29 @@ var manualStops sync.Map // Track scripts intended to stop
 // StartScriptHandler starts a script
 func StartScriptHandler(c *gin.Context) {
 	scriptID := c.Param("id")
+	if err := StartScriptInternal(scriptID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
+	c.JSON(http.StatusOK, gin.H{"message": "script started"})
+}
+
+// StartScriptInternal contains the core logic to start a script without gin context
+func StartScriptInternal(scriptID string) error {
 	var script models.Script
 	if err := database.DB.First(&script, "id = ?", scriptID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "script not found"})
-		return
+		return fmt.Errorf("script not found")
 	}
 
 	// Check if already running
 	var state models.ProcessState
 	if err := database.DB.First(&state, "script_id = ?", scriptID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch process state"})
-		return
+		return fmt.Errorf("failed to fetch process state")
 	}
 
 	if state.Status == "running" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "script is already running"})
-		return
+		return fmt.Errorf("script is already running")
 	}
 
 	// Detect venv python
@@ -61,14 +68,16 @@ func StartScriptHandler(c *gin.Context) {
 	// Start process
 	cmd := exec.Command(pythonPath, script.Path)
 	cmd.SysProcAttr = ConfigureSysProcAttr()
+	
+	// Force UTF-8 encoding for Python IO to avoid 'charmap' errors on Windows
+	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
 
 	// Create pipes for stdout/stderr
 	stdout, _ := cmd.StdoutPipe()
 	stderr, _ := cmd.StderrPipe()
 
 	if err := cmd.Start(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start script"})
-		return
+		return fmt.Errorf("failed to start process: %v", err)
 	}
 
 	// Store process
@@ -85,60 +94,57 @@ func StartScriptHandler(c *gin.Context) {
 	// Stream logs (non-blocking)
 	go streamLogs(scriptID, script.ID, stdout, stderr, cmd)
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "script started",
-		"pid":     cmd.Process.Pid,
-	})
+	return nil
 }
 
 // StopScriptHandler stops a script
 func StopScriptHandler(c *gin.Context) {
 	scriptID := c.Param("id")
+	if err := StopScriptInternal(scriptID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
+	c.JSON(http.StatusOK, gin.H{"message": "stop command sent"})
+}
+
+// StopScriptInternal contains the core logic to stop a script without gin context
+func StopScriptInternal(scriptID string) error {
 	var state models.ProcessState
 	if err := database.DB.First(&state, "script_id = ?", scriptID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch process state"})
-		return
+		return fmt.Errorf("failed to fetch process state")
 	}
 
-	if state.Status != "running" && state.PID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "script is not running and has no PID"})
-		return
+	if state.Status != "running" {
+		// If it's not running, we consider it already stopped
+		return nil
 	}
 
-	// Mark as manual stop
+	// Mark as manual stop so streamLogs knows this isn't a "crash"
 	manualStops.Store(scriptID, true)
 
 	// Kill the process using OS-specific helper
-	KillProcessTree(state.PID)
-
-	c.JSON(http.StatusOK, gin.H{"message": "stop command sent"})
+	return KillProcessTree(state.PID)
 }
 
 // RestartScriptHandler restarts a script
 func RestartScriptHandler(c *gin.Context) {
 	scriptID := c.Param("id")
 
-	var state models.ProcessState
-	if err := database.DB.First(&state, "script_id = ?", scriptID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch process state"})
+	// Stop using the internal logic to ensure it's marked as manual
+	_ = StopScriptInternal(scriptID)
+	delete(runningProcesses, scriptID)
+
+	// Small delay to allow process to release handles
+	time.Sleep(800 * time.Millisecond)
+
+	// Re-trigger the start logic
+	if err := StartScriptInternal(scriptID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Stop if running
-	if state.Status == "running" {
-		KillProcessTree(state.PID)
-		delete(runningProcesses, scriptID)
-	}
-
-	// Small delay
-	time.Sleep(500 * time.Millisecond)
-
-	// Re-trigger the start handler by creating a context and calling it
-	newCtx := &gin.Context{}
-	*newCtx = *c
-	newCtx.Params = append(newCtx.Params, gin.Param{Key: "id", Value: scriptID})
-	StartScriptHandler(newCtx)
+	c.JSON(http.StatusOK, gin.H{"message": "script restarted"})
 }
 
 // GetScriptStatusHandler returns the script status

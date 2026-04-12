@@ -75,6 +75,10 @@ func main() {
 		protected.POST("/scripts/:id/restart", api.RestartScriptHandler)
 		protected.GET("/scripts/:id/status", api.GetScriptStatusHandler)
 
+		// Bulk operations
+		protected.POST("/scripts/bulk/start", api.BulkStartHandler)
+		protected.POST("/scripts/bulk/stop", api.BulkStopHandler)
+
 		// Script logs
 		protected.GET("/scripts/:id/logs", api.GetLogsHandler)
 		protected.DELETE("/scripts/:id/logs", api.DeleteLogsHandler)

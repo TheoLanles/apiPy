@@ -19,10 +19,13 @@ func ConfigureSysProcAttr() *syscall.SysProcAttr {
 
 // KillProcessTree kills the process and all its children on Windows
 func KillProcessTree(pid int) error {
-	if pid == 0 {
+	if pid <= 0 {
 		return nil
 	}
-	return exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprint(pid)).Run()
+	// We ignore the error because taskkill returns exit code 128/1 if the process is already dead,
+	// which we consider a success for a "stop" operation.
+	_ = exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprint(pid)).Run()
+	return nil
 }
 
 // KillProcessByPort finds the process using the given port and kills it
