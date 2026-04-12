@@ -163,6 +163,11 @@ class APIClient {
     return response.data;
   }
 
+  async updateSystem() {
+    const response = await this.client.post("/settings/update");
+    return response.data;
+  }
+
   async getScriptStatus(id: string) {
     const response = await this.client.get<ProcessState>(
       `/scripts/${id}/status`

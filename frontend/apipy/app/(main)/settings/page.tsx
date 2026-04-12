@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, RefreshCw } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
@@ -94,7 +94,7 @@ export default function SettingsPage() {
 
   return (
     <div className="px-8 py-10" style={{ background: "#F5F0E8" }}>
-      
+
       {/* Header */}
       <div className="flex items-center justify-between mb-7">
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0D5C45", letterSpacing: "-0.01em" }}>
@@ -107,7 +107,7 @@ export default function SettingsPage() {
           <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>Discord Notifications</p>
           </div>
-          
+
           <div className="p-5 flex-1 flex flex-col">
             <form onSubmit={handleSave} className="flex flex-col gap-5 flex-1">
               <div>
@@ -130,13 +130,13 @@ export default function SettingsPage() {
                         onClick={handleTestWebhook}
                         disabled={isTesting || !webhookUrl}
                         className="flex items-center gap-2 px-4 py-2 rounded-xl transition"
-                        style={{ 
-                          background: "#F5F0E8", 
-                          color: "#0D5C45", 
-                          fontSize: 13, 
-                          fontWeight: 600, 
-                          border: "1px solid #C8DDD0", 
-                          cursor: isTesting ? "not-allowed" : "pointer" 
+                        style={{
+                          background: "#F5F0E8",
+                          color: "#0D5C45",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          border: "1px solid #C8DDD0",
+                          cursor: isTesting ? "not-allowed" : "pointer"
                         }}
                         onMouseEnter={e => !isTesting && (e.currentTarget.style.background = "#EBE5D9")}
                         onMouseLeave={e => !isTesting && (e.currentTarget.style.background = "#F5F0E8")}
@@ -148,12 +148,12 @@ export default function SettingsPage() {
                         type="submit"
                         disabled={isSaving || !isAdmin}
                         className="flex items-center gap-2 px-6 py-2 rounded-xl transition"
-                        style={{ 
-                          background: "#0D5C45", 
-                          color: "#F5F0E8", 
-                          fontSize: 13, 
-                          fontWeight: 600, 
-                          border: "none", 
+                        style={{
+                          background: "#0D5C45",
+                          color: "#F5F0E8",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          border: "none",
                           cursor: isSaving ? "not-allowed" : "pointer",
                           whiteSpace: "nowrap"
                         }}
@@ -172,11 +172,11 @@ export default function SettingsPage() {
               </div>
 
               {message && (
-                <div style={{ 
-                  fontSize: 13, 
-                  padding: "10px 12px", 
+                <div style={{
+                  fontSize: 13,
+                  padding: "10px 12px",
                   borderRadius: 10,
-                  background: message.type === "success" ? "#DCFCE7" : "#FEE2E2", 
+                  background: message.type === "success" ? "#DCFCE7" : "#FEE2E2",
                   color: message.type === "success" ? "#166534" : "#991B1B",
                   border: message.type === "success" ? "1px solid #BBF7D0" : "1px solid #FCA5A5"
                 }}>
@@ -213,7 +213,90 @@ export default function SettingsPage() {
           {isAdmin && (
             <DebugCard inputStyle={inputStyle} labelStyle={labelStyle} />
           )}
+
+          {/* Update System Card */}
+          {isAdmin && (
+            <UpdateCard labelStyle={labelStyle} />
+          )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function UpdateCard({ labelStyle }: { labelStyle: any }) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateMsg, setUpdateMsg] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
+
+  const handleUpdate = async () => {
+    if (!confirm("This will download the latest version from GitHub and restart the service. You will be disconnected for a few moments. Continue?")) return;
+
+    setIsUpdating(true);
+    setUpdateMsg({ text: "Update initiated... The application is restarting.", type: "info" });
+
+    try {
+      await api.updateSystem();
+      // Wait a bit and then show a reconnecting message
+      setTimeout(() => {
+        setUpdateMsg({ text: "Service is restarting. Please refresh the page in a few seconds.", type: "success" });
+      }, 5000);
+    } catch (err: any) {
+      // It's possible the request fails because the binary was swapped and process killed
+      if (err.message === "Network Error" || !err.response) {
+        setUpdateMsg({ text: "Update in progress... The system is now restarting.", type: "success" });
+      } else {
+        setUpdateMsg({ text: err.response?.data?.error || "Failed to trigger update", type: "error" });
+        setIsUpdating(false);
+      }
+    }
+  };
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
+      <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>System Update</p>
+      </div>
+      <div className="p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <label style={labelStyle}>Maintain Application</label>
+            <p style={{ fontSize: 13, color: "#4A7C65" }}>
+              Pull the latest version of apiPy directly from GitHub and restart the system service.
+            </p>
+          </div>
+          <button
+            onClick={handleUpdate}
+            disabled={isUpdating}
+            className="flex items-center gap-2 px-6 py-2 rounded-xl transition shrink-0"
+            style={{
+              background: "#0D5C45",
+              color: "#F5F0E8",
+              fontSize: 13,
+              fontWeight: 600,
+              border: "none",
+              cursor: isUpdating ? "not-allowed" : "pointer"
+            }}
+            onMouseEnter={e => !isUpdating && (e.currentTarget.style.background = "#0a4a37")}
+            onMouseLeave={e => !isUpdating && (e.currentTarget.style.background = "#0D5C45")}
+          >
+            {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {isUpdating ? "Updating..." : "Update Now"}
+          </button>
+        </div>
+
+        {updateMsg && (
+          <div style={{
+            fontSize: 13,
+            marginTop: 15,
+            padding: "10px 12px",
+            borderRadius: 10,
+            background: updateMsg.type === "success" ? "#DCFCE7" : updateMsg.type === "info" ? "#DBEAFE" : "#FEE2E2",
+            color: updateMsg.type === "success" ? "#166534" : updateMsg.type === "info" ? "#1E40AF" : "#991B1B",
+            border: updateMsg.type === "success" ? "1px solid #BBF7D0" : updateMsg.type === "info" ? "1px solid #BFDBFE" : "1px solid #FCA5A5"
+          }}>
+            {updateMsg.text}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -270,13 +353,13 @@ function DebugCard({ inputStyle, labelStyle }: { inputStyle: any; labelStyle: an
                 type="submit"
                 disabled={isKilling}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl transition"
-                style={{ 
-                  background: "#0D5C45", 
-                  color: "#F5F0E8", 
-                  fontSize: 13, 
-                  fontWeight: 600, 
-                  border: "none", 
-                  cursor: isKilling ? "not-allowed" : "pointer" 
+                style={{
+                  background: "#0D5C45",
+                  color: "#F5F0E8",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: isKilling ? "not-allowed" : "pointer"
                 }}
                 onMouseEnter={e => !isKilling && (e.currentTarget.style.background = "#0a4a37")}
                 onMouseLeave={e => !isKilling && (e.currentTarget.style.background = "#0D5C45")}
@@ -291,10 +374,10 @@ function DebugCard({ inputStyle, labelStyle }: { inputStyle: any; labelStyle: an
 
           {debugMsg && (
             <div style={{
-              fontSize: 13, 
-              padding: "10px 12px", 
+              fontSize: 13,
+              padding: "10px 12px",
               borderRadius: 10,
-              background: debugMsg.type === "success" ? "#DCFCE7" : "#FEE2E2", 
+              background: debugMsg.type === "success" ? "#DCFCE7" : "#FEE2E2",
               color: debugMsg.type === "success" ? "#166534" : "#991B1B",
               border: debugMsg.type === "success" ? "1px solid #BBF7D0" : "1px solid #FCA5A5"
             }}>

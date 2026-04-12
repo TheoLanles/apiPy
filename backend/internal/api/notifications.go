@@ -50,7 +50,7 @@ func SendDiscordNotification(scriptName, status string, isCrash bool) {
 				},
 				"timestamp": time.Now().Format(time.RFC3339),
 				"footer": map[string]string{
-					"text": "ZACT PyRunner Notifications",
+					"text": "apiPy Notifications",
 				},
 			},
 		},

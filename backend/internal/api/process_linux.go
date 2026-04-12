@@ -27,6 +27,12 @@ func KillProcessTree(pid int) error {
 
 // KillProcessByPort finds the process using the given port and kills it
 func KillProcessByPort(port int) error {
+	// Check if fuser is installed
+	_, err := exec.LookPath("fuser")
+	if err != nil {
+		return fmt.Errorf("the 'fuser' command was not found. Please install it with 'sudo apt install psmisc'")
+	}
+
 	// fuser -k port/tcp is the most direct way on Debian
 	return exec.Command("fuser", "-k", fmt.Sprintf("%d/tcp", port)).Run()
 }

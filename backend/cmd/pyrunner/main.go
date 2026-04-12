@@ -97,6 +97,7 @@ func main() {
 		{
 			adminSettings.POST("", api.UpdateSettingsHandler)
 			adminSettings.POST("/test-webhook", api.TestDiscordWebhookHandler)
+			adminSettings.POST("/update", api.UpdateSystemHandler)
 			adminSettings.POST("/debug/kill-port", api.KillPortHandler)
 		}
 	}

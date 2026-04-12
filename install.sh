@@ -14,7 +14,7 @@ echo "=============================="
 
 echo "=== INSTALL DEPENDENCIES ==="
 apt update -y
-apt install -y curl jq wget python3 python3-pip
+apt install -y curl jq wget psmisc python3 python3-pip python3-venv
 
 echo "=== CREATE INSTALL DIR ==="
 mkdir -p "$INSTALL_DIR"
