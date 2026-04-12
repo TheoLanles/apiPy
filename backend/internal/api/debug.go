@@ -18,6 +18,11 @@ func KillPortHandler(c *gin.Context) {
 		return
 	}
 
+	if req.Port == 8080 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Security: Cannot kill the main application port (8080)"})
+		return
+	}
+
 	if err := KillProcessByPort(req.Port); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
