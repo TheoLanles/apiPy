@@ -2,42 +2,44 @@
 
 ---
 
-PyRunner is a modern, high-performance web dashboard designed to manage, execute, and monitor Python scripts effortlessly. Built with a robust **Go** backend and a sleek **Next.js** frontend, it provides a professional-grade environment for automation and script orchestration.
+PyRunner is a modern, high-performance web dashboard designed to manage, execute, and monitor Python scripts. Built with a Go backend and a Next.js frontend, it provides a professional environment for automation and script orchestration.
 
 ---
 
-## ✨ Features
+## Features
 
-- 📂 **Full Script CRUD**: Effortlessly create, upload, edit, and organize your Python scripts.
-- ⚡ **Real-time Control**: Start, stop, and restart scripts with live status tracking.
-- 📜 **Live Streamed Logs**: Watch your scripts execute in real-time via advanced WebSocket streaming.
-- 🛡️ **Secure Access**: JWT-based authentication with role-based access control (Admin/User).
-- 🎨 **Modern UI**: A premium dashboard experience featuring **Dark Mode**, **Shadcn/UI**, and fluid animations.
-- 📦 **Environment Control**: Manage environment variables and reinstall dependencies directly from the UI.
-- 🗄️ **Persistent Logs**: Keep a history of your script outputs for later analysis.
+- **Full Script Management**: Create, upload, edit, and organize Python scripts.
+- **Real-time Control**: Start, stop, and restart scripts with live status tracking.
+- **WebSocket Log Streaming**: Monitor script execution in real-time through WebSocket streaming.
+- **Secure Authentication**: JWT-based authentication with role-based access control (Admin and User).
+- **Premium Interface**: Modern dashboard with dark mode support, built using Shadcn/UI.
+- **Environment Management**: Configure environment variables and manage dependencies directly from the interface.
+- **Persistent Logs**: History of script outputs stored for later analysis.
 
 ---
 
-## 🛠️ Tech Stack
+## Technical Stack
 
 ### Backend
-- **Language**: [Go (1.21+)](https://go.dev/)
-- **Framework**: [Gin Gonic](https://gin-gonic.com/)
-- **Database**: [SQLite](https://www.sqlite.org/) with [GORM](https://gorm.io/)
-- **Auth**: JWT (JSON Web Tokens)
+- **Language**: Go (1.21+)
+- **Framework**: Gin Gonic
+- **Database**: SQLite with GORM
+- **Authentication**: JWT (JSON Web Tokens)
 - **Communication**: WebSockets for real-time log streaming
 
 ### Frontend
-- **Framework**: [Next.js 15+](https://nextjs.org/) (App Router)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
-- **State Management**: [Zustand](https://docs.pmnd.rs/zustand/getting-started/introduction)
-- **Icons**: [Lucide React](https://lucide.dev/)
+- **Framework**: Next.js 16 (App Router)
+- **Styling**: Tailwind CSS & Shadcn/UI
+- **State Management**: Zustand
+- **Icons**: Lucide React
 
 ---
 
-## 🚀 Quick Linux Deployment (Debian/Ubuntu)
+## Deployment
 
-If you are on a Linux server, you can deploy **apiPy** instantly with this one-liner:
+### Quick Linux Deployment (Debian/Ubuntu)
+
+For a rapid deployment on a Linux server, run the following command:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/TheoLanles/apiPy/main/install.sh | sudo bash
@@ -45,7 +47,7 @@ curl -sSL https://raw.githubusercontent.com/TheoLanles/apiPy/main/install.sh | s
 
 ### Proxmox VE LXC Deployment
 
-Deploy **apiPy** as a high-performance LXC container on Proxmox with a single command:
+To deploy apiPy as an LXC container on Proxmox VE, use the following interactive script:
 
 ```bash
 bash -c "$(wget -qLO - https://raw.githubusercontent.com/TheoLanles/apiPy/main/proxmox-lxc.sh)"
@@ -53,43 +55,41 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/TheoLanles/apiPy/main/p
 
 ---
 
-## 🚀 Getting Started (Manual)
+## Manual Installation
 
 ### Prerequisites
-- [Go](https://go.dev/doc/install) (v1.21 or higher)
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [Python](https://www.python.org/) installed and in your system PATH
+- Go v1.21 or higher
+- Node.js v18 or higher
+- Python installed and available in system PATH
 
 ### 1. Build the Unified Binary
-PyRunner is designed to run as a single, standalone executable that includes both the backend and the frontend assets. The build script automates frontend compilation, asset embedding, and multi-target binary generation.
+PyRunner runs as a standalone executable including both the backend and encapsulated frontend assets.
 
 ```powershell
 # On Windows (PowerShell)
 .\build.ps1
 ```
 
-**What this script does:**
-1. **Frontend Compilation**: Builds the Next.js app into static files (`out/` folder).
-2. **Asset Embedding**: Transfers assets to the Go backend for compilation.
-3. **Multi-Target Build**: Generates `bin/apiPy.exe` (Windows) and `bin/apiPy` (Linux).
+The build script performs the following actions:
+1. Compiles the Next.js frontend into static assets.
+2. Embeds the static assets into the Go binary.
+3. Generates the final executables in the bin directory.
 
-### 2. Run the Application
-After building, you can run the generated executable from the `backend/bin` directory.
+### 2. Execution
+Run the generated executable from the backend directory:
 
-```powershell
-# Windows
-.\backend\bin\apiPy.exe
-
+```bash
 # Linux
 ./backend/bin/apiPy
+
+# Windows
+.\backend\bin\apiPy.exe
 ```
-*The Dashboard will be accessible at `http://localhost:8080`.*
+The dashboard is accessible by default at `http://localhost:8080`.
 
 ---
 
-## 🛠️ Development Mode
-
-If you wish to modify the code with hot-reloading:
+## Development Guide
 
 ### Backend (Hot Reload)
 ```bash
@@ -106,7 +106,7 @@ npm run dev
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 api-py/
@@ -121,21 +121,22 @@ api-py/
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
-The backend is configured via `.env`:
+The backend is configured via the `.env` file or environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `SERVER_PORT` | Port the API listens on | `8080` |
-| `DB_PATH` | Path to SQLite database | `./pyrunner.db` |
-| `JWT_SECRET` | Secret for token signing | *Change this!* |
-| `PYTHON_PATH` | Command to run Python | `python` |
+| `DB_PATH` | Path to the SQLite database | `./pyrunner.db` |
+| `JWT_SECRET` | Secret key for JWT signing | (Generated at startup) |
+| `PYTHON_PATH` | Command to execute Python | `python` |
+| `CORS_DOMAIN` | Allowed CORS origin | (Configurable via UI) |
 
 ---
 
-## 📜 License
+## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 Developed with ❤️ by [Theo](https://github.com/TheoLanles)
