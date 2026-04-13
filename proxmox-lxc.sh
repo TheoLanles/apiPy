@@ -30,7 +30,6 @@ function update_script() {
     exit
   fi
   msg_info "Updating $APP LXC"
-  # Run the pure installation script in update mode
   bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheoLanles/apiPy/main/install.sh)"
   msg_ok "Updated $APP LXC"
   exit
@@ -42,12 +41,20 @@ description
 
 # --- Post-Creation Installation ---
 msg_info "Installing ${APP}..."
-# This runs inside the container via pct exec (managed by build.func helper logic or manually)
-# Note: build_container in some versions sets $CTID.
-# We execute the pure installation script inside the LXC
+
 pct exec $CTID -- bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheoLanles/apiPy/main/install.sh)"
 
-IP=$(pct exec $CTID -- hostname -I | awk '{print $1}')
+# Attendre que le réseau soit prêt dans le container
+sleep 5
+
+# Récupérer l'IP depuis l'hôte Proxmox directement (plus fiable)
+IP=$(pct exec $CTID -- bash -c "hostname -I | awk '{print \$1}'" 2>/dev/null | tr -d '[:space:]')
+
+# Fallback : récupérer via pct config si hostname -I échoue
+if [[ -z "$IP" ]]; then
+  IP=$(pct config $CTID | grep '^net' | grep -oP 'ip=\K[^/,]+' | head -1)
+fi
+
 msg_ok "Completed successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access the dashboard at: ${BL}http://${IP}:8080${CL}"
