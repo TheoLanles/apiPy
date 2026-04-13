@@ -114,7 +114,7 @@ export default function SettingsPage() {
                 <label style={labelStyle}>Discord Webhook URL</label>
                 <div className="flex gap-2">
                   <input
-                    type="url"
+                    type="text"
                     placeholder="https://discord.com/api/webhooks/..."
                     value={webhookUrl}
                     onChange={e => setWebhookUrl(e.target.value)}

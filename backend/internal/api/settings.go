@@ -9,7 +9,7 @@ import (
 )
 
 type UpdateSettingsRequest struct {
-	DiscordWebhookURL string `json:"discord_webhook_url" binding:"required"`
+	DiscordWebhookURL string `json:"discord_webhook_url"`
 }
 
 // GetSettingsHandler returns the current system settings

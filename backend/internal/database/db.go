@@ -22,6 +22,14 @@ func Init(dataSourceName string) error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
+	// Performance optimizations for SQLite
+	sqlDB, err := DB.DB()
+	if err == nil {
+		sqlDB.SetMaxOpenConns(1)
+		DB.Exec("PRAGMA journal_mode=WAL;")
+		DB.Exec("PRAGMA synchronous=NORMAL;")
+	}
+
 	// Auto-migrate all models
 	err = DB.AutoMigrate(
 		&models.User{},

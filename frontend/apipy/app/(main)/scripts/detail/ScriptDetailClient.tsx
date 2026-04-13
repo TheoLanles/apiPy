@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Script, ProcessState, ScriptLog } from "@/types";
-import { Loader2, Play, Square, RotateCw, Pencil, Download, Trash2, X, Save, Package } from "lucide-react";
+import { Loader2, Play, Square, RotateCw, Package } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { CodeEditor } from "./components/CodeEditor";
+import { LogViewer } from "./components/LogViewer";
 
 export default function ScriptDetailClient() {
   const { user } = useAuthStore();
@@ -24,45 +26,105 @@ export default function ScriptDetailClient() {
   const [isClearLogsDialogOpen, setIsClearLogsDialogOpen] = useState(false);
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (scriptId) {
-      loadData();
-      const interval = setInterval(loadData, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [scriptId, editMode]);
+  const lastStatusRef = useRef<string | null>(null);
 
-  const loadData = async () => {
+  const fetchStatus = useCallback(async () => {
+    if (!scriptId) return;
     try {
-      const scriptData = await api.getScript(scriptId);
-      setScript(scriptData);
       const stateData = await api.getScriptStatus(scriptId);
       setState(stateData);
+      lastStatusRef.current = stateData.status;
+    } catch (err) {
+      console.error("Failed to load status:", err);
+    }
+  }, [scriptId]);
+
+  const fetchLogs = useCallback(async () => {
+    if (!scriptId) return;
+    try {
       const logsData = await api.getLogs(scriptId);
       setLogs(logsData);
-
-      if (!editMode) {
-        const fileData = await api.getScriptFile(scriptId);
-        setContent(fileData.content);
-      }
     } catch (err) {
-      console.error("Failed to load script:", err);
-    } finally {
-      setIsLoading(false);
+      console.error("Failed to load logs:", err);
     }
-  };
+  }, [scriptId]);
 
-  const handleStart = async () => { setIsExecuting(true); try { await api.startScript(scriptId); await loadData(); } catch { } finally { setIsExecuting(false); } };
+  // Initial load: fetch everything once
+  useEffect(() => {
+    if (!scriptId) return;
+
+    const init = async () => {
+      try {
+        const [scriptData, stateData, logsData, fileData] = await Promise.all([
+          api.getScript(scriptId),
+          api.getScriptStatus(scriptId),
+          api.getLogs(scriptId),
+          api.getScriptFile(scriptId)
+        ]);
+
+        setScript(scriptData);
+        setState(stateData);
+        setLogs(logsData);
+        setContent(fileData.content);
+        lastStatusRef.current = stateData.status;
+      } catch (err) {
+        console.error("Failed to load initial data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    init();
+  }, [scriptId]);
+
+  // Continually poll status every 2 seconds
+  useEffect(() => {
+    if (!scriptId || isLoading) return;
+    const interval = setInterval(fetchStatus, 2000);
+    return () => clearInterval(interval);
+  }, [scriptId, isLoading, fetchStatus]);
+
+  // Poll logs ONLY if script is running
+  useEffect(() => {
+    if (!scriptId || isLoading) return;
+    
+    // Check if we should poll logs: running
+    const shouldPollLogs = state?.status === "running";
+    
+    if (shouldPollLogs) {
+      const interval = setInterval(fetchLogs, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [scriptId, isLoading, state?.status, fetchLogs]);
+
+  const handleStart = async () => { 
+    setIsExecuting(true); 
+    try { 
+      await api.startScript(scriptId); 
+      await fetchStatus();
+      await fetchLogs();
+    } catch { } finally { setIsExecuting(false); } 
+  };
+  
   const handleStop = async () => {
     setIsStopDialogOpen(false);
     setIsExecuting(true);
     try {
       await api.stopScript(scriptId);
-      await loadData();
+      await fetchStatus();
+      await fetchLogs();
     } catch { }
     finally { setIsExecuting(false); }
   };
-  const handleRestart = async () => { setIsExecuting(true); try { await api.restartScript(scriptId); await loadData(); } catch { } finally { setIsExecuting(false); } };
+
+  const handleRestart = async () => { 
+    setIsExecuting(true); 
+    try { 
+      await api.restartScript(scriptId); 
+      await fetchStatus(); 
+      await fetchLogs();
+    } catch { } finally { setIsExecuting(false); } 
+  };
   const handleSaveContent = async () => { try { await api.updateScriptFile(scriptId, content); setEditMode(false); } catch (err) { console.error(err); } };
   const handleClearLogs = async () => {
     setIsClearLogsDialogOpen(false);
@@ -228,71 +290,22 @@ export default function ScriptDetailClient() {
       </div>
 
 
-      {/* Script content */}
-      <div className="rounded-2xl overflow-hidden mb-4" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: "#0D5C45" }}>Script content</p>
-          {isAdmin && (
-            editMode ? (
-              <div className="flex gap-2">
-                <button onClick={handleSaveContent} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ fontSize: 12, fontWeight: 600, background: "#0D5C45", color: "#F5F0E8", border: "none", cursor: "pointer" }}>
-                  <Save size={12} /> Save
-                </button>
-                <button onClick={() => setEditMode(false)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ fontSize: 12, fontWeight: 500, background: "transparent", color: "#4A7C65", border: "1px solid #C8DDD0", cursor: "pointer" }}>
-                  <X size={12} /> Cancel
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => setEditMode(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ fontSize: 12, fontWeight: 500, color: "#0D5C45", background: "#F5F0E8", border: "1px solid #C8DDD0", cursor: "pointer" }}>
-                <Pencil size={12} /> Edit
-              </button>
-            )
-          )}
-        </div>
-        <div className="p-4">
-          {editMode ? (
-            <textarea
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              style={{ width: "100%", boxSizing: "border-box", height: 320, padding: "10px", background: "#F5F0E8", border: "1px solid #C8DDD0", borderRadius: 10, fontFamily: "monospace", fontSize: 12, color: "#0D5C45", outline: "none", resize: "vertical" }}
-              onFocus={e => e.target.style.borderColor = "#00C853"}
-              onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-            />
-          ) : (
-            <pre style={{ background: "#0D5C45", color: "#F5F0E8", padding: "16px", borderRadius: 10, fontFamily: "monospace", fontSize: 12, overflowX: "auto", maxHeight: 320, margin: 0 }}>
-              {content || <span style={{ color: "rgba(245,240,232,0.4)" }}>Empty file</span>}
-            </pre>
-          )}
-        </div>
-      </div>
+      <CodeEditor
+        content={content}
+        editMode={editMode}
+        isAdmin={isAdmin}
+        setContent={setContent}
+        onSave={handleSaveContent}
+        onCancel={() => setEditMode(false)}
+        onEdit={() => setEditMode(true)}
+      />
 
-      {/* Logs */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: "#0D5C45" }}>Logs</p>
-          <div className="flex gap-2">
-            <button onClick={handleDownloadLogs} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition" style={{ fontSize: 12, fontWeight: 500, color: "#0D5C45", background: "#F5F0E8", border: "1px solid #C8DDD0", cursor: "pointer" }}>
-              <Download size={12} /> Download
-            </button>
-            {isAdmin && (
-              <button onClick={() => setIsClearLogsDialogOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition" style={{ fontSize: 12, fontWeight: 500, color: "#991B1B", background: "#FEE2E2", border: "1px solid #FCA5A5", cursor: "pointer" }}>
-                <Trash2 size={12} /> Clear
-              </button>
-            )}
-          </div>
-        </div>
-        <div style={{ background: "#0D5C45", margin: 16, borderRadius: 10, padding: "12px 16px", fontFamily: "monospace", fontSize: 12, maxHeight: 384, overflowY: "auto" }}>
-          {logs.length === 0 ? (
-            <p style={{ color: "rgba(245,240,232,0.35)" }}>No logs</p>
-          ) : (
-            logs.map(log => (
-              <div key={log.id} style={{ color: log.level === "ERROR" ? "#FCA5A5" : log.level === "WARNING" ? "#FCD34D" : "#86EFAC", lineHeight: 1.7 }}>
-                [{log.level}] {log.line}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      <LogViewer
+        logs={logs}
+        isAdmin={isAdmin}
+        onDownload={handleDownloadLogs}
+        onClear={() => setIsClearLogsDialogOpen(true)}
+      />
 
       <ConfirmationDialog
         isOpen={isClearLogsDialogOpen}

@@ -28,6 +28,9 @@ func main() {
 		log.Fatalf("Failed to initialize scripts directory: %v", err)
 	}
 
+	// Start log buffering service
+	api.StartLogBuffer()
+
 	// Create Gin router
 	router := gin.Default()
 	router.RedirectTrailingSlash = false
@@ -74,6 +77,7 @@ func main() {
 		protected.POST("/scripts/:id/stop", api.StopScriptHandler)
 		protected.POST("/scripts/:id/restart", api.RestartScriptHandler)
 		protected.GET("/scripts/:id/status", api.GetScriptStatusHandler)
+		protected.GET("/scripts/status", api.GetAllScriptsStatusHandler)
 
 		// Bulk operations
 		protected.POST("/scripts/bulk/start", api.BulkStartHandler)

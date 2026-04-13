@@ -19,8 +19,8 @@ func HealthHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":       "ok",
-		"message":      "PyRunner API is running",
-		"version":      "v1.2.6",
+		"message":      "apiPy API is running",
+		"version":      "v1.2.7",
 		"setup_needed": setupNeeded,
 	})
 }

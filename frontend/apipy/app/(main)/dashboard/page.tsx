@@ -1,40 +1,59 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { api } from "@/lib/api";
 import type { Script, ProcessState } from "@/types";
 import { Loader2 } from "lucide-react";
+import { StatsCard } from "@/components/StatsCard";
 
 export default function DashboardPage() {
   const [scripts, setScripts] = useState<Script[]>([]);
   const [states, setStates] = useState<Record<string, ProcessState>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
+  const loadScripts = useCallback(async () => {
     try {
-      const scriptsData = await api.getScripts();
-      setScripts(scriptsData || []);
-      const statesData: Record<string, ProcessState> = {};
-      for (const script of (scriptsData || [])) {
-        try {
-          const state = await api.getScriptStatus(script.id);
-          statesData[script.id] = state;
-        } catch { }
-      }
-      setStates(statesData);
+      const data = await api.getScripts();
+      setScripts(data || []);
     } catch (err) {
-      console.error("Failed to load dashboard data:", err);
+      console.error("Failed to load scripts:", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const runningCount = Object.values(states).filter(s => s.status === "running").length;
-  const errorCount = Object.values(states).filter(s => s.status === "error" || s.status === "crashed").length;
+  const loadStatuses = useCallback(async () => {
+    try {
+      const statuses = await api.getAllScriptsStatus();
+      setStates(statuses);
+    } catch (err) {
+      console.error("Failed to load statuses:", err);
+    }
+  }, []);
 
-  const statusStyle = (status: string) => {
+  // Initial load
+  useEffect(() => {
+    const init = async () => {
+      await Promise.all([loadScripts(), loadStatuses()]);
+    };
+    init();
+  }, [loadScripts, loadStatuses]);
+
+  // Polling for statuses every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(loadStatuses, 5000);
+    return () => clearInterval(interval);
+  }, [loadStatuses]);
+
+  const runningCount = useMemo(() => 
+    Object.values(states).filter(s => s.status === "running").length, 
+  [states]);
+
+  const errorCount = useMemo(() => 
+    Object.values(states).filter(s => s.status === "error" || s.status === "crashed").length,
+  [states]);
+
+  const tableStatusStyle = (status: string) => {
     if (status === "running") return { background: "#DCFCE7", color: "#166534", border: "1px solid #BBF7D0" };
     if (status === "error" || status === "crashed") return { background: "#FEE2E2", color: "#991B1B", border: "1px solid #FCA5A5" };
     return { background: "#FFEDD5", color: "#9A3412", border: "1px solid #FED7AA" };
@@ -50,24 +69,9 @@ export default function DashboardPage() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {[
-          { label: "Total scripts", value: scripts.length, color: "#0D5C45" },
-          { label: "Running", value: runningCount, color: "#16A34A" },
-          { label: "Errors", value: errorCount, color: "#DC2626" },
-        ].map(({ label, value, color }) => (
-          <div
-            key={label}
-            className="rounded-2xl p-5"
-            style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
-          >
-            <p style={{ fontSize: 11, fontWeight: 600, color: "#4A7C65", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-              {label}
-            </p>
-            <p style={{ fontSize: 32, fontWeight: 700, color, lineHeight: 1 }}>
-              {value}
-            </p>
-          </div>
-        ))}
+        <StatsCard label="Total scripts" value={scripts.length} color="#0D5C45" />
+        <StatsCard label="Running" value={runningCount} color="#16A34A" />
+        <StatsCard label="Errors" value={errorCount} color="#DC2626" />
       </div>
 
       {/* Scripts table */}
@@ -105,7 +109,7 @@ export default function DashboardPage() {
                     </div>
                     <span
                       className="rounded-full px-3 py-1"
-                      style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", ...statusStyle(status) }}
+                      style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", ...tableStatusStyle(status) }}
                     >
                       {status}
                     </span>

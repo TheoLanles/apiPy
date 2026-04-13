@@ -185,6 +185,13 @@ class APIClient {
     return response.data;
   }
 
+  async getAllScriptsStatus() {
+    const response = await this.client.get<Record<string, ProcessState>>(
+      "/scripts/status"
+    );
+    return response.data;
+  }
+
   // Logs endpoints
   async getLogs(id: string, limit: number = 1000) {
     const response = await this.client.get<ScriptLog[]>(`/scripts/${id}/logs`, {

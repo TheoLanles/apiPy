@@ -11,14 +11,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/theo/pyrunner/internal/database"
 	"github.com/theo/pyrunner/internal/models"
 )
 
-// Global map to track running processes
-var runningProcesses = make(map[string]*exec.Cmd)
-var manualStops sync.Map // Track scripts intended to stop
+// Global state for process tracking
+var (
+	runningProcesses = make(map[string]*exec.Cmd)
+	processMutex     sync.RWMutex
+	manualStops      sync.Map // Track scripts intended to stop
+)
 
 // StartScriptHandler starts a script
 func StartScriptHandler(c *gin.Context) {
@@ -80,8 +82,10 @@ func StartScriptInternal(scriptID string) error {
 		return fmt.Errorf("failed to start process: %v", err)
 	}
 
-	// Store process
+	// Store process safely
+	processMutex.Lock()
 	runningProcesses[scriptID] = cmd
+	processMutex.Unlock()
 
 	// Update process state
 	now := time.Now()
@@ -125,10 +129,12 @@ func StopScriptInternal(scriptID string) error {
 	// Kill the process using OS-specific helper
 	err := KillProcessTree(state.PID)
 	
-	// Even if kill failed (e.g. process already gone), we want to "unstick" the UI
-	// If there's no running process in our map, it means streamLogs isn't running
-	// to update the status, so we must do it manually here.
-	if _, exists := runningProcesses[scriptID]; !exists {
+	// Ensure status update if the process was already dead and missed by streamLogs
+	processMutex.RLock()
+	_, exists := runningProcesses[scriptID]
+	processMutex.RUnlock()
+
+	if !exists {
 		now := time.Now()
 		state.Status = "stopped"
 		state.StoppedAt = &now
@@ -145,7 +151,10 @@ func RestartScriptHandler(c *gin.Context) {
 
 	// Stop using the internal logic to ensure it's marked as manual
 	_ = StopScriptInternal(scriptID)
+
+	processMutex.Lock()
 	delete(runningProcesses, scriptID)
+	processMutex.Unlock()
 
 	// Small delay to allow process to release handles
 	time.Sleep(800 * time.Millisecond)
@@ -170,6 +179,23 @@ func GetScriptStatusHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, state)
+}
+
+// GetAllScriptsStatusHandler returns status for all scripts in a single call
+func GetAllScriptsStatusHandler(c *gin.Context) {
+	var states []models.ProcessState
+	if err := database.DB.Find(&states).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch process states"})
+		return
+	}
+
+	// Map to script_id -> state for easier frontend processing
+	result := make(map[string]models.ProcessState)
+	for _, s := range states {
+		result[s.ScriptID] = s
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // streamLogs continuously reads and stores logs from stdout/stderr
@@ -248,16 +274,12 @@ func streamLogs(scriptID string, dbScriptID string, stdout, stderr io.ReadCloser
 		database.DB.Save(&state)
 	}
 
+	processMutex.Lock()
 	delete(runningProcesses, scriptID)
+	processMutex.Unlock()
 }
 
-// SaveLog stores a log entry in the database
+// SaveLog redirects logs to the buffering service for efficiency
 func SaveLog(scriptID, content, level string) {
-	log := models.ScriptLog{
-		ID:       uuid.New().String(),
-		ScriptID: scriptID,
-		Line:     content,
-		Level:    level,
-	}
-	database.DB.Create(&log)
+	QueueLog(scriptID, content, level)
 }
