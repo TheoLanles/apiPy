@@ -114,7 +114,6 @@ api-py/
 │   ├── cmd/            # Entry points
 │   ├── internal/       # Core logic (API, Services, Models)
 │   ├── bin/            # Compiled binaries
-│   └── pyrunner.db     # SQLite Database
 ├── frontend/           # Next.js Application
    └── apipy/           # Main frontend source
 ```
