@@ -3,17 +3,23 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { Loader2, Save, RefreshCw, AlertTriangle } from "lucide-react";
+import { Loader2, Save, RefreshCw, AlertTriangle, Settings as SettingsIcon, Bell, Shield, Terminal, Activity } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [oidcEnabled, setOidcEnabled] = useState(false);
+  const [oidcIssuer, setOidcIssuer] = useState("");
+  const [oidcClientID, setOidcClientID] = useState("");
+  const [oidcClientSecret, setOidcClientSecret] = useState("");
+  const [oidcRedirectURL, setOidcRedirectURL] = useState("");
   const [version, setVersion] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [activeTab, setActiveTab] = useState<"system" | "notifications" | "auth" | "tools">("system");
 
   useEffect(() => {
     loadSettings();
@@ -23,6 +29,11 @@ export default function SettingsPage() {
     try {
       const settingsData = await api.getSettings();
       setWebhookUrl(settingsData.discord_webhook_url || "");
+      setOidcEnabled(settingsData.oidc_enabled || false);
+      setOidcIssuer(settingsData.oidc_issuer || "");
+      setOidcClientID(settingsData.oidc_client_id || "");
+      setOidcClientSecret(settingsData.oidc_client_secret || "");
+      setOidcRedirectURL(settingsData.oidc_redirect_url || "");
       const healthData = await api.getHealth();
       setVersion(healthData.version);
     } catch (err) {
@@ -55,7 +66,14 @@ export default function SettingsPage() {
     setIsSaving(true);
     setMessage(null);
     try {
-      await api.updateSettings({ discord_webhook_url: webhookUrl });
+      await api.updateSettings({ 
+        discord_webhook_url: webhookUrl,
+        oidc_enabled: oidcEnabled,
+        oidc_issuer: oidcIssuer,
+        oidc_client_id: oidcClientID,
+        oidc_client_secret: oidcClientSecret,
+        oidc_redirect_url: oidcRedirectURL
+      });
       setMessage({ text: "Settings saved successfully!", type: "success" });
     } catch (err: any) {
       setMessage({ text: err.response?.data?.error || "Failed to save settings", type: "error" });
@@ -92,132 +110,321 @@ export default function SettingsPage() {
     marginBottom: 6,
   };
 
+  const tabs = [
+    { id: "system", label: "System", icon: Activity },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "auth", label: "Authentication", icon: Shield },
+    { id: "tools", label: "Tools", icon: Terminal },
+  ] as const;
+
   return (
-    <div className="px-8 py-10" style={{ background: "#F5F0E8" }}>
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-7">
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0D5C45", letterSpacing: "-0.01em" }}>
-          Settings
-        </h1>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-          <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>Discord Notifications</p>
-          </div>
-
-          <div className="p-5 flex-1 flex flex-col">
-            <form onSubmit={handleSave} className="flex flex-col gap-5 flex-1">
-              <div>
-                <label style={labelStyle}>Discord Webhook URL</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="https://discord.com/api/webhooks/..."
-                    value={webhookUrl}
-                    onChange={e => setWebhookUrl(e.target.value)}
-                    disabled={!isAdmin || isSaving}
-                    style={{ ...inputStyle, flex: 1 }}
-                    onFocus={e => e.target.style.borderColor = "#00C853"}
-                    onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-                  />
-                  {isAdmin && (
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleTestWebhook}
-                        disabled={isTesting || !webhookUrl}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl transition"
-                        style={{
-                          background: "#F5F0E8",
-                          color: "#0D5C45",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          border: "1px solid #C8DDD0",
-                          cursor: isTesting ? "not-allowed" : "pointer"
-                        }}
-                        onMouseEnter={e => !isTesting && (e.currentTarget.style.background = "#EBE5D9")}
-                        onMouseLeave={e => !isTesting && (e.currentTarget.style.background = "#F5F0E8")}
-                      >
-                        {isTesting ? <Loader2 size={14} className="animate-spin" /> : null}
-                        Test
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isSaving || !isAdmin}
-                        className="flex items-center gap-2 px-6 py-2 rounded-xl transition"
-                        style={{
-                          background: "#0D5C45",
-                          color: "#F5F0E8",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          border: "none",
-                          cursor: isSaving ? "not-allowed" : "pointer",
-                          whiteSpace: "nowrap"
-                        }}
-                        onMouseEnter={e => !isSaving && (e.currentTarget.style.background = "#0a4a37")}
-                        onMouseLeave={e => !isSaving && (e.currentTarget.style.background = "#0D5C45")}
-                      >
-                        {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        Save
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <p style={{ fontSize: 12, color: "#4A7C65", marginTop: 6 }}>
-                  Enter your Discord channel webhook URL to receive status alerts.
-                </p>
-              </div>
-
-              {message && (
-                <div style={{
-                  fontSize: 13,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: message.type === "success" ? "#DCFCE7" : "#FEE2E2",
-                  color: message.type === "success" ? "#166534" : "#991B1B",
-                  border: message.type === "success" ? "1px solid #BBF7D0" : "1px solid #FCA5A5"
-                }}>
-                  {message.text}
-                </div>
-              )}
-            </form>
+    <div className="px-6 py-10 min-h-screen" style={{ background: "#F5F0E8" }}>
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: "#0D5C45", letterSpacing: "-0.02em" }}>
+              Settings
+            </h1>
+            <p style={{ fontSize: 13, color: "#4A7C65", marginTop: 2 }}>
+              Manage your application preferences and system configuration.
+            </p>
           </div>
         </div>
 
-        {/* System Info Section */}
-        <div className="flex flex-col gap-6">
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-            <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>System Information</p>
-            </div>
-            <div className="p-5 flex flex-col gap-4">
-              <div>
-                <label style={labelStyle}>API Server URL</label>
-                <code style={{ fontSize: 11, color: "#0D5C45", background: "#F5F0E8", padding: "6px 10px", borderRadius: 8, display: "block", fontFamily: "monospace", border: "1px solid #C8DDD0", wordBreak: "break-all" }}>
-                  {api.getBaseUrl()}
-                </code>
-              </div>
-              <div>
-                <label style={labelStyle}>Application Version</label>
-                <div style={{ fontSize: 13, color: "#0D5C45", fontWeight: 700 }}>
-                  {version || "Checking..."}
-                </div>
-              </div>
+        {message && (
+          <div 
+            className="mb-6 animate-in fade-in slide-in-from-top-2 duration-300"
+            style={{
+              fontSize: 14,
+              padding: "12px 16px",
+              borderRadius: 16,
+              background: message.type === "success" ? "#DCFCE7" : "#FEE2E2",
+              color: message.type === "success" ? "#166534" : "#991B1B",
+              border: "1px solid",
+              borderColor: message.type === "success" ? "#BBF7D0" : "#FCA5A5",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
+            }}
+          >
+            {message.type === "success" ? (
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            ) : (
+              <AlertTriangle size={16} />
+            )}
+            <span style={{ fontWeight: 500 }}>{message.text}</span>
+            <button 
+              onClick={() => setMessage(null)}
+              className="ml-auto opacity-50 hover:opacity-100 transition-opacity"
+              style={{ fontSize: 18, lineHeight: 1 }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar Navigation */}
+          <div className="w-full md:w-64 shrink-0">
+            <div className="flex flex-col gap-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+                  style={{
+                    background: activeTab === tab.id ? "#FFFFFF" : "transparent",
+                    color: activeTab === tab.id ? "#0D5C45" : "#4A7C65",
+                    fontWeight: activeTab === tab.id ? 700 : 500,
+                    border: activeTab === tab.id ? "1px solid #D6E8DC" : "1px solid transparent",
+                    boxShadow: activeTab === tab.id ? "0 4px 12px rgba(13, 92, 69, 0.05)" : "none",
+                  }}
+                >
+                  <tab.icon size={18} />
+                  <span style={{ fontSize: 14 }}>{tab.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Debug Tools Card */}
-          {isAdmin && (
-            <DebugCard inputStyle={inputStyle} labelStyle={labelStyle} />
-          )}
+          {/* Tab Content */}
+          <div className="flex-1 min-w-0">
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+              {activeTab === "system" && (
+                <div className="flex flex-col gap-6">
+                  {/* System Info Card */}
+                  <div className="rounded-3xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
+                    <div className="px-6 py-5" style={{ borderBottom: "1px solid #F0F7F2" }}>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "#0D5C45" }}>System Information</p>
+                    </div>
+                    <div className="p-6 flex flex-col gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label style={labelStyle}>API Server URL</label>
+                          <code style={{ 
+                            fontSize: 12, 
+                            color: "#0D5C45", 
+                            background: "#F5F0E8", 
+                            padding: "8px 12px", 
+                            borderRadius: 12, 
+                            display: "block", 
+                            fontFamily: "monospace", 
+                            border: "1px solid #C8DDD0" 
+                          }}>
+                            {api.getBaseUrl()}
+                          </code>
+                        </div>
+                        <div>
+                          <label style={labelStyle}>App Version</label>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+                            <span style={{ fontSize: 20, color: "#0D5C45", fontWeight: 800 }}>
+                              {version || "..."}
+                            </span>
+                            <span style={{ fontSize: 12, color: "#4A7C65", fontWeight: 500 }}>stable</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-          {/* Update System Card */}
-          {isAdmin && (
-            <UpdateCard labelStyle={labelStyle} />
-          )}
+                  {/* Update Card */}
+                  {isAdmin && <UpdateCard labelStyle={labelStyle} />}
+                </div>
+              )}
+
+              {activeTab === "notifications" && (
+                <div className="flex flex-col gap-6">
+                  <div className="rounded-3xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
+                    <div className="px-6 py-5" style={{ borderBottom: "1px solid #F0F7F2" }}>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "#0D5C45" }}>Discord Notifications</p>
+                    </div>
+                    <div className="p-6">
+                      <form onSubmit={handleSave} className="flex flex-col gap-6">
+                        <div>
+                          <label style={labelStyle}>Discord Webhook URL</label>
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <input
+                              type="text"
+                              placeholder="https://discord.com/api/webhooks/..."
+                              value={webhookUrl}
+                              onChange={e => setWebhookUrl(e.target.value)}
+                              disabled={!isAdmin || isSaving}
+                              style={{ ...inputStyle, flex: 1 }}
+                              onFocus={e => e.target.style.borderColor = "#00C853"}
+                              onBlur={e => e.target.style.borderColor = "#C8DDD0"}
+                            />
+                            {isAdmin && (
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={handleTestWebhook}
+                                  disabled={isTesting || !webhookUrl}
+                                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all"
+                                  style={{
+                                    background: "#F5F0E8",
+                                    color: "#0D5C45",
+                                    fontSize: 13,
+                                    fontWeight: 700,
+                                    border: "1px solid #C8DDD0",
+                                  }}
+                                >
+                                  {isTesting ? <Loader2 size={14} className="animate-spin" /> : null}
+                                  Test
+                                </button>
+                                <button
+                                  type="submit"
+                                  disabled={isSaving}
+                                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-900/10 transition-all hover:translate-y-[-1px]"
+                                  style={{
+                                    background: "#0D5C45",
+                                    color: "#FFFFFF",
+                                    fontSize: 13,
+                                    fontWeight: 700,
+                                    border: "none",
+                                  }}
+                                >
+                                  {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                  Save Change
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <p style={{ fontSize: 12, color: "#4A7C65", marginTop: 10 }}>
+                            Notifications are sent when a script enters an error state or crashes.
+                          </p>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "auth" && (
+                <div className="flex flex-col gap-6">
+                  <div className="rounded-3xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
+                    <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: "1px solid #F0F7F2" }}>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "#0D5C45" }}>OpenID Connect (OIDC)</p>
+                      <button
+                        type="button"
+                        onClick={() => setOidcEnabled(!oidcEnabled)}
+                        disabled={!isAdmin || isSaving}
+                        style={{
+                          width: 48,
+                          height: 26,
+                          borderRadius: 13,
+                          background: oidcEnabled ? "#0D5C45" : "#E2E8F0",
+                          position: "relative",
+                          transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                          cursor: isAdmin ? "pointer" : "default"
+                        }}
+                      >
+                        <div style={{
+                          position: "absolute",
+                          top: 3,
+                          left: oidcEnabled ? 25 : 3,
+                          width: 20,
+                          height: 20,
+                          borderRadius: 10,
+                          background: "#FFFFFF",
+                          transition: "left 0.3s",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                        }} />
+                      </button>
+                    </div>
+                    <div className="p-6">
+                      <div className="flex flex-col gap-6">
+                        {!oidcEnabled && (
+                          <div className="py-4 text-center">
+                            <p style={{ color: "#4A7C65", fontSize: 13 }}>
+                              OIDC authentication is currently disabled. Toggle to configure.
+                            </p>
+                          </div>
+                        )}
+                        {oidcEnabled && (
+                          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div>
+                              <label style={labelStyle}>Issuer URL</label>
+                              <input
+                                type="text"
+                                placeholder="https://accounts.google.com"
+                                value={oidcIssuer}
+                                onChange={e => setOidcIssuer(e.target.value)}
+                                disabled={!isAdmin || isSaving}
+                                style={inputStyle}
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label style={labelStyle}>Client ID</label>
+                                <input
+                                  type="text"
+                                  placeholder="your-client-id"
+                                  value={oidcClientID}
+                                  onChange={e => setOidcClientID(e.target.value)}
+                                  disabled={!isAdmin || isSaving}
+                                  style={inputStyle}
+                                />
+                              </div>
+                              <div>
+                                <label style={labelStyle}>Client Secret</label>
+                                <input
+                                  type="password"
+                                  placeholder="••••••••••••"
+                                  value={oidcClientSecret}
+                                  onChange={e => setOidcClientSecret(e.target.value)}
+                                  disabled={!isAdmin || isSaving}
+                                  style={inputStyle}
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label style={labelStyle}>Redirect URL</label>
+                              <input
+                                type="text"
+                                placeholder="https://apipy.example.com/api/auth/oidc/callback"
+                                value={oidcRedirectURL}
+                                onChange={e => setOidcRedirectURL(e.target.value)}
+                                disabled={!isAdmin || isSaving}
+                                style={inputStyle}
+                              />
+                              <p style={{ fontSize: 11, color: "#4A7C65", marginTop: 10, padding: 12, background: "#FDFCF6", borderRadius: 8, border: "1px solid #FAF7E6" }}>
+                                <strong>Tip:</strong> Ensure your OIDC provider allows redirects to this URL.
+                              </p>
+                            </div>
+                            <div className="flex justify-end pt-2">
+                              <button
+                                onClick={handleSave}
+                                disabled={isSaving || !isAdmin}
+                                className="flex items-center gap-2 px-8 py-2.5 rounded-xl shadow-lg shadow-emerald-900/10 transition-all hover:translate-y-[-1px]"
+                                style={{
+                                  background: "#0D5C45",
+                                  color: "#FFFFFF",
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  border: "none",
+                                }}
+                              >
+                                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                Save Auth Config
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "tools" && (
+                <div className="flex flex-col gap-6">
+                  {isAdmin && <DebugCard inputStyle={inputStyle} labelStyle={labelStyle} />}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

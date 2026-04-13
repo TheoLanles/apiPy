@@ -10,6 +10,11 @@ import (
 
 type UpdateSettingsRequest struct {
 	DiscordWebhookURL string `json:"discord_webhook_url"`
+	OIDCEnabled       bool   `json:"oidc_enabled"`
+	OIDCIssuer        string `json:"oidc_issuer"`
+	OIDCClientID      string `json:"oidc_client_id"`
+	OIDCClientSecret  string `json:"oidc_client_secret"`
+	OIDCRedirectURL   string `json:"oidc_redirect_url"`
 }
 
 // GetSettingsHandler returns the current system settings
@@ -38,6 +43,11 @@ func UpdateSettingsHandler(c *gin.Context) {
 	}
 
 	settings.DiscordWebhookURL = req.DiscordWebhookURL
+	settings.OIDCEnabled = req.OIDCEnabled
+	settings.OIDCIssuer = req.OIDCIssuer
+	settings.OIDCClientID = req.OIDCClientID
+	settings.OIDCClientSecret = req.OIDCClientSecret
+	settings.OIDCRedirectURL = req.OIDCRedirectURL
 
 	if err := database.DB.Save(&settings).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save settings"})

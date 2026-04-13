@@ -55,4 +55,9 @@ type ProcessState struct {
 type Settings struct {
 	ID                uint   `gorm:"primaryKey" json:"id"`
 	DiscordWebhookURL string `json:"discord_webhook_url"`
+	OIDCEnabled       bool   `json:"oidc_enabled"`
+	OIDCIssuer        string `json:"oidc_issuer"`
+	OIDCClientID      string `json:"oidc_client_id"`
+	OIDCClientSecret  string `json:"oidc_client_secret"`
+	OIDCRedirectURL   string `json:"oidc_redirect_url"`
 }

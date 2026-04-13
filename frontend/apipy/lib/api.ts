@@ -37,6 +37,7 @@ class APIClient {
       message: string;
       version: string;
       setup_needed: boolean;
+      oidc_enabled: boolean;
     }>("/health");
     return response.data;
   }
@@ -163,7 +164,7 @@ class APIClient {
     return response.data;
   }
 
-  async updateSettings(data: { discord_webhook_url: string }) {
+  async updateSettings(data: Partial<Settings>) {
     const response = await this.client.post<Settings>("/settings", data);
     return response.data;
   }

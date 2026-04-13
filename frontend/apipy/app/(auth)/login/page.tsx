@@ -1,32 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { Loader2 } from "lucide-react";
+import { Loader2, Globe } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const { setUser, setToken } = useAuthStore();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [oidcEnabled, setOidcEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const checkSetup = async () => {
+    const checkStatus = async () => {
       try {
         const health = await api.getHealth();
-        if (health.setup_needed) router.push("/setup");
-        else setIsLoading(false);
+        if (health.setup_needed) {
+          router.push("/setup");
+          return;
+        }
+        
+        setOidcEnabled(health.oidc_enabled);
+        
+        // Handle OIDC errors from redirect
+        const errorParam = searchParams.get("error");
+        if (errorParam) {
+          setError(`OIDC Error: ${errorParam.replace(/_/g, " ")}`);
+        }
+        
+        setIsLoading(false);
       } catch {
         setIsLoading(false);
       }
     };
-    checkSetup();
-  }, [router]);
+    checkStatus();
+  }, [router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +194,37 @@ export default function LoginPage() {
             </button>
 
           </form>
+
+          {oidcEnabled && (
+            <div className="mt-6">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[#D6E8DC]"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-3 text-[#4A7C65] font-semibold tracking-wider">Or continue with</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => window.location.href = `${api.getBaseUrl()}/auth/oidc/login`}
+                className="w-full rounded-lg py-2.5 text-sm font-semibold flex items-center justify-center gap-3 transition group"
+                style={{
+                  background: "#F5F0E8",
+                  color: "#0D5C45",
+                  border: "1px solid #C8DDD0",
+                  cursor: isSubmitting ? "not-allowed" : "pointer",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#EBE5D9")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#F5F0E8")}
+              >
+                <Globe className="h-4 w-4 text-[#0D5C45] group-hover:scale-110 transition-transform" />
+                Login with OpenID
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -195,5 +241,20 @@ export default function LoginPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div
+        style={{ background: "#F5F0E8" }}
+        className="flex flex-col items-center justify-center min-h-screen"
+      >
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-800" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

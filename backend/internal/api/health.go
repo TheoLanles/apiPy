@@ -16,11 +16,14 @@ func HealthHandler(c *gin.Context) {
 	if err := database.DB.Model(&models.User{}).Count(&count).Error; err == nil {
 		setupNeeded = count == 0
 	}
+	var settings models.Settings
+	database.DB.First(&settings)
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":       "ok",
 		"message":      "apiPy API is running",
-		"version":      "v1.2.7",
+		"version":      "v1.2.8",
 		"setup_needed": setupNeeded,
+		"oidc_enabled": settings.OIDCEnabled,
 	})
 }

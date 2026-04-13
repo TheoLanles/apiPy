@@ -49,6 +49,8 @@ func main() {
 		public.POST("/setup", api.SetupHandler)
 		public.POST("/auth/login", api.LoginHandler)
 		public.POST("/auth/logout", api.LogoutHandler)
+		public.GET("/auth/oidc/login", api.OIDCLoginHandler)
+		public.GET("/auth/oidc/callback", api.OIDCCallbackHandler)
 	}
 
 	// Protected routes (requires auth)
