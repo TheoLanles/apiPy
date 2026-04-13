@@ -2,6 +2,8 @@
 
 import React from "react";
 import { Pencil, Save, X } from "lucide-react";
+import SimpleBar from "simplebar-react";
+import "simplebar-react/dist/simplebar.min.css";
 
 interface CodeEditorProps {
   content: string;
@@ -48,14 +50,26 @@ export const CodeEditor = React.memo(({
           <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
+            className="custom-scrollbar-light"
             style={{ width: "100%", boxSizing: "border-box", height: 320, padding: "10px", background: "#F5F0E8", border: "1px solid #C8DDD0", borderRadius: 10, fontFamily: "monospace", fontSize: 12, color: "#0D5C45", outline: "none", resize: "vertical" }}
             onFocus={e => e.target.style.borderColor = "#00C853"}
             onBlur={e => e.target.style.borderColor = "#C8DDD0"}
           />
         ) : (
-          <pre style={{ background: "#0D5C45", color: "#F5F0E8", padding: "16px", borderRadius: 10, fontFamily: "monospace", fontSize: 12, overflowX: "auto", maxHeight: 320, margin: 0 }}>
-            {content || <span style={{ color: "rgba(245,240,232,0.4)" }}>Empty file</span>}
-          </pre>
+          <div 
+            className="hide-scrollbar" 
+            style={{ 
+              background: "#0D5C45", 
+              borderRadius: 10, 
+              maxHeight: 320, 
+              overflow: "hidden", 
+              padding: "16px" 
+            }}
+          >
+            <pre style={{ color: "#F5F0E8", fontFamily: "monospace", fontSize: 12, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+              {content || <span style={{ color: "rgba(245,240,232,0.4)" }}>Empty file</span>}
+            </pre>
+          </div>
         )}
       </div>
     </div>

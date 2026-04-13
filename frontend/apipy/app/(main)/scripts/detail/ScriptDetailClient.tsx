@@ -87,25 +87,25 @@ export default function ScriptDetailClient() {
   // Poll logs ONLY if script is running
   useEffect(() => {
     if (!scriptId || isLoading) return;
-    
+
     // Check if we should poll logs: running
     const shouldPollLogs = state?.status === "running";
-    
+
     if (shouldPollLogs) {
       const interval = setInterval(fetchLogs, 2000);
       return () => clearInterval(interval);
     }
   }, [scriptId, isLoading, state?.status, fetchLogs]);
 
-  const handleStart = async () => { 
-    setIsExecuting(true); 
-    try { 
-      await api.startScript(scriptId); 
+  const handleStart = async () => {
+    setIsExecuting(true);
+    try {
+      await api.startScript(scriptId);
       await fetchStatus();
       await fetchLogs();
-    } catch { } finally { setIsExecuting(false); } 
+    } catch { } finally { setIsExecuting(false); }
   };
-  
+
   const handleStop = async () => {
     setIsStopDialogOpen(false);
     setIsExecuting(true);
@@ -117,13 +117,13 @@ export default function ScriptDetailClient() {
     finally { setIsExecuting(false); }
   };
 
-  const handleRestart = async () => { 
-    setIsExecuting(true); 
-    try { 
-      await api.restartScript(scriptId); 
-      await fetchStatus(); 
+  const handleRestart = async () => {
+    setIsExecuting(true);
+    try {
+      await api.restartScript(scriptId);
+      await fetchStatus();
       await fetchLogs();
-    } catch { } finally { setIsExecuting(false); } 
+    } catch { } finally { setIsExecuting(false); }
   };
   const handleSaveContent = async () => { try { await api.updateScriptFile(scriptId, content); setEditMode(false); } catch (err) { console.error(err); } };
   const handleClearLogs = async () => {

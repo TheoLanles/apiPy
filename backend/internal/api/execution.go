@@ -71,8 +71,11 @@ func StartScriptInternal(scriptID string) error {
 	cmd := exec.Command(pythonPath, script.Path)
 	cmd.SysProcAttr = ConfigureSysProcAttr()
 	
-	// Force UTF-8 encoding for Python IO to avoid 'charmap' errors on Windows
-	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
+	// Force UTF-8 encoding and disable buffering for real-time logs
+	cmd.Env = append(os.Environ(), 
+		"PYTHONIOENCODING=utf-8",
+		"PYTHONUNBUFFERED=1",
+	)
 
 	// Create pipes for stdout/stderr
 	stdout, _ := cmd.StdoutPipe()

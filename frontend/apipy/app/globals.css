@@ -60,3 +60,168 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Arial", sans-serif;
 }
+
+/* --- Global Custom Scrollbar --- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(13, 92, 69, 0.2); /* Turboself Green */
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(13, 92, 69, 0.4);
+}
+
+/* Dark Mode Scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(245, 240, 232, 0.15); /* Soft Sand for dark mode */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 240, 232, 0.3);
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(13, 92, 69, 0.2) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(245, 240, 232, 0.15) transparent;
+}
+
+/* --- Custom Scrollbar - Dark Theme (SimpleBar) --- */
+.custom-scrollbar-dark .simplebar-scrollbar::before {
+  background: rgba(245, 240, 232, 0.25) !important; /* Soft sand white */
+  border-radius: 4px;
+  right: 2px;
+  left: 2px;
+}
+
+.custom-scrollbar-dark .simplebar-scrollbar.simplebar-visible::before {
+  opacity: 1;
+}
+
+.custom-scrollbar-dark .simplebar-track.simplebar-vertical {
+  background: rgba(0, 0, 0, 0.15) !important;
+  width: 9px;
+  border-radius: 10px;
+  margin-right: 4px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.custom-scrollbar-dark .simplebar-track.simplebar-horizontal {
+  background: rgba(0, 0, 0, 0.15) !important;
+  height: 9px;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+
+.custom-scrollbar-dark .simplebar-scrollbar.horizontal::before {
+  top: 2px;
+  bottom: 2px;
+}
+
+/* Smooth transition for the thumb */
+.custom-scrollbar-dark .simplebar-scrollbar::before {
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.custom-scrollbar-dark:hover .simplebar-scrollbar::before {
+  background: rgba(245, 240, 232, 0.45) !important;
+}
+
+/* --- Custom Scrollbar - Light Theme (SimpleBar) --- */
+.custom-scrollbar-light .simplebar-scrollbar::before {
+  background: rgba(13, 92, 69, 0.15) !important; /* Soft dark green */
+  border-radius: 4px;
+}
+
+.custom-scrollbar-light .simplebar-scrollbar.simplebar-visible::before {
+  opacity: 1;
+}
+
+.custom-scrollbar-light .simplebar-track.simplebar-vertical {
+  background: rgba(0, 0, 0, 0.05) !important;
+  width: 9px;
+  border-radius: 10px;
+  margin-right: 4px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.custom-scrollbar-light:hover .simplebar-scrollbar::before {
+  background: rgba(13, 92, 69, 0.3) !important;
+}
+
+/* --- Native Scrollbar Overrides (for Textareas) --- */
+.custom-scrollbar-light {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(13, 92, 69, 0.15) rgba(0, 0, 0, 0.05) !important;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+.custom-scrollbar-light::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 10px !important;
+}
+.custom-scrollbar-light::-webkit-scrollbar-thumb {
+  background: rgba(13, 92, 69, 0.15) !important;
+  border-radius: 10px !important;
+  border: 2px solid transparent !important;
+  background-clip: content-box !important;
+}
+.custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: rgba(13, 92, 69, 0.3) !important;
+  background-clip: content-box !important;
+}
+
+.custom-scrollbar-dark {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(245, 240, 232, 0.2) rgba(0, 0, 0, 0.15) !important;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+.custom-scrollbar-dark::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15) !important;
+  border-radius: 10px !important;
+}
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: rgba(245, 240, 232, 0.2) !important;
+  border-radius: 10px !important;
+  border: 2px solid transparent !important;
+  background-clip: content-box !important;
+}
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 240, 232, 0.4) !important;
+  background-clip: content-box !important;
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari and Opera */
+}

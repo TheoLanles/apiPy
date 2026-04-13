@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { Sidebar } from "@/components/sidebar";
 import { Loader2 } from "lucide-react";
+import SimpleBar from "simplebar-react";
+import "simplebar-react/dist/simplebar.min.css";
 
 export default function MainLayout({
   children,
@@ -34,8 +36,10 @@ export default function MainLayout({
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto" style={{ background: "#F5F0E8" }}>
-        {children}
+      <main className="flex-1" style={{ background: "#F5F0E8" }}>
+        <SimpleBar className="h-full custom-scrollbar-light" autoHide={true}>
+          {children}
+        </SimpleBar>
       </main>
     </div>
   );

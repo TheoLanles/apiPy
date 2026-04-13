@@ -2,6 +2,8 @@
 
 import React from "react";
 import { Download, Trash2 } from "lucide-react";
+import SimpleBar from "simplebar-react";
+import "simplebar-react/dist/simplebar.min.css";
 import type { ScriptLog } from "@/types";
 
 interface LogViewerProps {
@@ -17,6 +19,10 @@ export const LogViewer = React.memo(({
   onDownload,
   onClear
 }: LogViewerProps) => {
+  const stripAnsi = (str: string) => {
+    return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+  };
+
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
       <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
@@ -32,16 +38,31 @@ export const LogViewer = React.memo(({
           )}
         </div>
       </div>
-      <div style={{ background: "#0D5C45", margin: 16, borderRadius: 10, padding: "12px 16px", fontFamily: "monospace", fontSize: 12, maxHeight: 384, overflowY: "auto" }}>
-        {logs.length === 0 ? (
-          <p style={{ color: "rgba(245,240,232,0.35)" }}>No logs</p>
-        ) : (
-          logs.map(log => (
-            <div key={log.id} style={{ color: log.level === "ERROR" ? "#FCA5A5" : log.level === "WARNING" ? "#FCD34D" : "#86EFAC", lineHeight: 1.7 }}>
-              [{log.level}] {log.line}
-            </div>
-          ))
-        )}
+      
+      <div style={{ background: "#0D5C45", margin: 16, borderRadius: 10, padding: 0, overflow: "hidden" }}>
+        <SimpleBar 
+          className="custom-scrollbar-dark" 
+          style={{ maxHeight: 384, padding: "12px 16px" }}
+          autoHide={true}
+        >
+          {logs.length === 0 ? (
+            <p style={{ color: "rgba(245,240,232,0.35)", fontSize: 12, fontFamily: "monospace" }}>No logs</p>
+          ) : (
+            logs.map(log => (
+              <div 
+                key={log.id} 
+                style={{ 
+                  color: log.level === "ERROR" ? "#FCA5A5" : log.level === "WARNING" ? "#FCD34D" : "#86EFAC", 
+                  lineHeight: 1.7,
+                  fontFamily: "monospace",
+                  fontSize: 12
+                }}
+              >
+                [{log.level}] {stripAnsi(log.line)}
+              </div>
+            ))
+          )}
+        </SimpleBar>
       </div>
     </div>
   );
