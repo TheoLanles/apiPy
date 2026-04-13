@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import type { Script, ProcessState, ScriptLog } from "@/types";
 import { Loader2, Play, Square, RotateCw, Package } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
+import { useScriptWebSocket } from "@/hooks/use-script-websocket";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { CodeEditor } from "./components/CodeEditor";
 import { LogViewer } from "./components/LogViewer";
@@ -49,6 +50,21 @@ export default function ScriptDetailClient() {
     }
   }, [scriptId]);
 
+  // WebSocket handler for real-time log push (deduplicate by ID)
+  const handleNewLog = useCallback((log: ScriptLog) => {
+    setLogs(prev => {
+      if (prev.some(l => l.id === log.id)) return prev;
+      return [...prev, log];
+    });
+  }, []);
+
+  // Connect WebSocket when script is running (with auth)
+  const { isConnected: wsConnected } = useScriptWebSocket({
+    scriptId,
+    enabled: state?.status === "running",
+    onLog: handleNewLog,
+  });
+
   // Initial load: fetch everything once
   useEffect(() => {
     if (!scriptId) return;
@@ -84,18 +100,16 @@ export default function ScriptDetailClient() {
     return () => clearInterval(interval);
   }, [scriptId, isLoading, fetchStatus]);
 
-  // Poll logs ONLY if script is running
+  // Fallback: poll logs only if WebSocket is NOT connected and script is running
   useEffect(() => {
-    if (!scriptId || isLoading) return;
+    if (!scriptId || isLoading || wsConnected) return;
 
-    // Check if we should poll logs: running
     const shouldPollLogs = state?.status === "running";
-
     if (shouldPollLogs) {
-      const interval = setInterval(fetchLogs, 2000);
+      const interval = setInterval(fetchLogs, 3000);
       return () => clearInterval(interval);
     }
-  }, [scriptId, isLoading, state?.status, fetchLogs]);
+  }, [scriptId, isLoading, state?.status, wsConnected, fetchLogs]);
 
   const handleStart = async () => {
     setIsExecuting(true);
@@ -303,6 +317,7 @@ export default function ScriptDetailClient() {
       <LogViewer
         logs={logs}
         isAdmin={isAdmin}
+        isLive={wsConnected}
         onDownload={handleDownloadLogs}
         onClear={() => setIsClearLogsDialogOpen(true)}
       />

@@ -9,6 +9,7 @@ export default function SettingsPage() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [corsDomain, setCorsDomain] = useState("");
   const [oidcEnabled, setOidcEnabled] = useState(false);
   const [oidcIssuer, setOidcIssuer] = useState("");
   const [oidcClientID, setOidcClientID] = useState("");
@@ -19,7 +20,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
-  const [activeTab, setActiveTab] = useState<"system" | "notifications" | "auth" | "tools">("system");
+  const [activeTab, setActiveTab] = useState("system");
 
   useEffect(() => {
     loadSettings();
@@ -29,6 +30,7 @@ export default function SettingsPage() {
     try {
       const settingsData = await api.getSettings();
       setWebhookUrl(settingsData.discord_webhook_url || "");
+      setCorsDomain(settingsData.cors_domain || "");
       setOidcEnabled(settingsData.oidc_enabled || false);
       setOidcIssuer(settingsData.oidc_issuer || "");
       setOidcClientID(settingsData.oidc_client_id || "");
@@ -68,6 +70,7 @@ export default function SettingsPage() {
     try {
       await api.updateSettings({ 
         discord_webhook_url: webhookUrl,
+        cors_domain: corsDomain,
         oidc_enabled: oidcEnabled,
         oidc_issuer: oidcIssuer,
         oidc_client_id: oidcClientID,
@@ -110,12 +113,14 @@ export default function SettingsPage() {
     marginBottom: 6,
   };
 
-  const tabs = [
-    { id: "system", label: "System", icon: Activity },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "auth", label: "Authentication", icon: Shield },
-    { id: "tools", label: "Tools", icon: Terminal },
+  const allTabs = [
+    { id: "system", label: "System", icon: Activity, adminOnly: false },
+    { id: "notifications", label: "Notifications", icon: Bell, adminOnly: true },
+    { id: "auth", label: "Authentication", icon: Shield, adminOnly: true },
+    { id: "tools", label: "Tools", icon: Terminal, adminOnly: true },
   ] as const;
+
+  const tabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
 
   return (
     <div className="px-6 py-10 min-h-screen" style={{ background: "#F5F0E8" }}>
@@ -228,6 +233,57 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* CORS Domain Card */}
+                  {isAdmin && (
+                    <div className="rounded-3xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
+                      <div className="px-6 py-5" style={{ borderBottom: "1px solid #F0F7F2" }}>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: "#0D5C45" }}>CORS / Reverse Proxy</p>
+                      </div>
+                      <div className="p-6">
+                        <form onSubmit={handleSave} className="flex flex-col gap-5">
+                          <div>
+                            <label style={labelStyle}>Allowed Origin Domain</label>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                              <input
+                                type="text"
+                                placeholder="https://pyrunner.example.com"
+                                value={corsDomain}
+                                onChange={e => setCorsDomain(e.target.value)}
+                                disabled={!isAdmin || isSaving}
+                                style={{ ...inputStyle, flex: 1, fontFamily: "monospace" }}
+                                onFocus={e => e.target.style.borderColor = "#00C853"}
+                                onBlur={e => e.target.style.borderColor = "#C8DDD0"}
+                              />
+                              <button
+                                type="submit"
+                                disabled={isSaving}
+                                className="flex items-center gap-2 px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-900/10 transition-all hover:translate-y-[-1px]"
+                                style={{
+                                  background: "#0D5C45",
+                                  color: "#FFFFFF",
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  border: "none",
+                                }}
+                              >
+                                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                Save
+                              </button>
+                            </div>
+                            <p style={{ fontSize: 12, color: "#4A7C65", marginTop: 10 }}>
+                              If you access PyRunner through a reverse proxy (Nginx, Traefik, Caddy...),
+                              enter your public URL here including the protocol.
+                            </p>
+                            <p style={{ fontSize: 11, color: "#4A7C65", marginTop: 6, padding: 12, background: "#FDFCF6", borderRadius: 8, border: "1px solid #FAF7E6" }}>
+                              <strong>Examples:</strong> <code>https://pyrunner.myserver.com</code> · <code>https://scripts.example.org</code><br />
+                              <strong>Note:</strong> <code>localhost</code> is always allowed. Changes apply instantly without restart.
+                            </p>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Update Card */}
                   {isAdmin && <UpdateCard labelStyle={labelStyle} />}

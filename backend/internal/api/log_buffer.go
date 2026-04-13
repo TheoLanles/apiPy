@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/theo/pyrunner/internal/database"
 	"github.com/theo/pyrunner/internal/models"
+	"github.com/theo/pyrunner/internal/ws"
 )
 
 type LogEntry struct {
@@ -33,13 +34,18 @@ func StartLogBuffer() {
 		for {
 			select {
 			case entry := <-logChan:
-				bufMutex.Lock()
-				buffer = append(buffer, models.ScriptLog{
+				logEntry := models.ScriptLog{
 					ID:       uuid.New().String(),
 					ScriptID: entry.ScriptID,
 					Line:     entry.Content,
 					Level:    entry.Level,
-				})
+				}
+
+				// Broadcast to WebSocket clients immediately (real-time push)
+				ws.BroadcastLog(entry.ScriptID, logEntry)
+
+				bufMutex.Lock()
+				buffer = append(buffer, logEntry)
 				reachedBatch := len(buffer) >= batchSize
 				bufMutex.Unlock()
 
@@ -79,3 +85,4 @@ func QueueLog(scriptID, content, level string) {
 		Level:    level,
 	}
 }
+

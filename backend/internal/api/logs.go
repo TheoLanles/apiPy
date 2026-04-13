@@ -45,24 +45,29 @@ func DeleteLogsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "logs deleted"})
 }
 
-// DownloadLogsHandler returns logs as text file
+// DownloadLogsHandler streams logs as a text file directly from DB (constant memory)
 func DownloadLogsHandler(c *gin.Context) {
 	scriptID := c.Param("id")
 
-	logs := []models.ScriptLog{}
-	if err := database.DB.
+	rows, err := database.DB.Model(&models.ScriptLog{}).
 		Where("script_id = ?", scriptID).
 		Order("created_at ASC").
-		Find(&logs).Error; err != nil {
+		Rows()
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch logs"})
 		return
 	}
-
-	var content string
-	for _, log := range logs {
-		content += fmt.Sprintf("[%s] %s: %s\n", log.CreatedAt.Format("2006-01-02 15:04:05"), log.Level, log.Line)
-	}
+	defer rows.Close()
 
 	c.Header("Content-Disposition", "attachment; filename=logs.txt")
-	c.Data(http.StatusOK, "text/plain", []byte(content))
+	c.Header("Content-Type", "text/plain")
+	c.Status(http.StatusOK)
+
+	for rows.Next() {
+		var log models.ScriptLog
+		if err := database.DB.ScanRows(rows, &log); err != nil {
+			continue
+		}
+		fmt.Fprintf(c.Writer, "[%s] %s: %s\n", log.CreatedAt.Format("2006-01-02 15:04:05"), log.Level, log.Line)
+	}
 }

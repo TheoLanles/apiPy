@@ -67,9 +67,33 @@ func CreateUserHandler(c *gin.Context) {
 
 // DeleteUserHandler deletes a user (admin only)
 func DeleteUserHandler(c *gin.Context) {
-	userID := c.Param("id")
+	targetID := c.Param("id")
+	currentUserID, _ := c.Get("user_id")
 
-	if err := database.DB.Delete(&models.User{}, "id = ?", userID).Error; err != nil {
+	// Prevent self-deletion
+	if targetID == currentUserID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you cannot delete your own account"})
+		return
+	}
+
+	// Check if the target user exists and is an admin
+	var targetUser models.User
+	if err := database.DB.First(&targetUser, "id = ?", targetID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	// If deleting an admin, ensure at least one admin remains
+	if targetUser.Role == "admin" {
+		var adminCount int64
+		database.DB.Model(&models.User{}).Where("role = ?", "admin").Count(&adminCount)
+		if adminCount <= 1 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "cannot delete the last admin account"})
+			return
+		}
+	}
+
+	if err := database.DB.Delete(&models.User{}, "id = ?", targetID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user"})
 		return
 	}

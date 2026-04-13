@@ -23,6 +23,12 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
+	// Load or auto-generate JWT secret from database
+	middleware.InitJWTSecret(database.DB)
+
+	// Load CORS allowed domain from database
+	middleware.InitCORS(database.DB)
+
 	// Initialize scripts directory
 	if err := api.InitScriptsDir(); err != nil {
 		log.Fatalf("Failed to initialize scripts directory: %v", err)
@@ -30,6 +36,9 @@ func main() {
 
 	// Start log buffering service
 	api.StartLogBuffer()
+
+	// Start log retention (cleanup old logs every hour)
+	database.StartLogRetention()
 
 	// Create Gin router
 	router := gin.Default()
@@ -41,21 +50,28 @@ func main() {
 
 	// Apply middleware
 	router.Use(middleware.CORSMiddleware())
+	router.Use(middleware.SecurityHeadersMiddleware())
 
-	// Public routes (no auth)
+	// Rate limiters (per-IP, in-memory token bucket)
+	authLimiter := middleware.NewRateLimiter(5, 5)      // 5 req/min, burst 5 (login, setup)
+	apiLimiter := middleware.NewRateLimiter(100, 30)     // 100 req/min, burst 30 (general API)
+	uploadLimiter := middleware.NewRateLimiter(10, 3)    // 10 req/min, burst 3 (file uploads)
+
+	// Public routes (no auth, strict rate-limit on login)
 	public := router.Group("/api")
 	{
 		public.GET("/health", api.HealthHandler)
-		public.POST("/setup", api.SetupHandler)
-		public.POST("/auth/login", api.LoginHandler)
+		public.POST("/setup", middleware.RateLimitMiddleware(authLimiter), api.SetupHandler)
+		public.POST("/auth/login", middleware.RateLimitMiddleware(authLimiter), api.LoginHandler)
 		public.POST("/auth/logout", api.LogoutHandler)
-		public.GET("/auth/oidc/login", api.OIDCLoginHandler)
+		public.GET("/auth/oidc/login", middleware.RateLimitMiddleware(authLimiter), api.OIDCLoginHandler)
 		public.GET("/auth/oidc/callback", api.OIDCCallbackHandler)
 	}
 
-	// Protected routes (requires auth)
+	// Protected routes (requires auth + general rate-limit)
 	protected := router.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
+	protected.Use(middleware.RateLimitMiddleware(apiLimiter))
 	{
 		// Auth
 		protected.GET("/auth/me", api.MeHandler)
@@ -63,7 +79,7 @@ func main() {
 		// Scripts CRUD
 		protected.GET("/scripts", api.GetScriptsHandler)
 		protected.POST("/scripts", api.CreateScriptHandler)
-		protected.POST("/scripts/upload", api.UploadScriptHandler)
+		protected.POST("/scripts/upload", middleware.RateLimitMiddleware(uploadLimiter), api.UploadScriptHandler)
 		protected.GET("/scripts/:id", api.GetScriptHandler)
 		protected.PUT("/scripts/:id", api.UpdateScriptHandler)
 		protected.DELETE("/scripts/:id", api.DeleteScriptFileHandler)

@@ -4,12 +4,32 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/theo/pyrunner/internal/database"
 	"github.com/theo/pyrunner/internal/models"
 )
+
+// validateScriptPath ensures the path is within the scripts/ directory.
+// Returns the cleaned absolute path or an error message.
+func validateScriptPath(path string) (string, bool) {
+	absPath, err := filepath.Abs(filepath.Clean(path))
+	if err != nil {
+		return "", false
+	}
+	scriptsDir, err := filepath.Abs("scripts")
+	if err != nil {
+		return "", false
+	}
+	// Path must be inside scripts/ directory
+	if !strings.HasPrefix(absPath, scriptsDir+string(os.PathSeparator)) && absPath != scriptsDir {
+		return "", false
+	}
+	return absPath, true
+}
 
 type CreateScriptRequest struct {
 	Name        string `json:"name" binding:"required"`
@@ -39,17 +59,24 @@ func GetScriptsHandler(c *gin.Context) {
 		return
 	}
 
-	response := []ScriptResponse{}
-	for _, s := range scripts {
-		dir := filepath.Dir(s.Path)
-		reqPath := filepath.Join(dir, "requirements.txt")
-		_, err := os.Stat(reqPath)
-		response = append(response, ScriptResponse{
-			Script:          s,
-			HasRequirements: err == nil,
-		})
+	response := make([]ScriptResponse, len(scripts))
+	var wg sync.WaitGroup
+
+	for i, s := range scripts {
+		wg.Add(1)
+		go func(idx int, script models.Script) {
+			defer wg.Done()
+			dir := filepath.Dir(script.Path)
+			reqPath := filepath.Join(dir, "requirements.txt")
+			_, err := os.Stat(reqPath)
+			response[idx] = ScriptResponse{
+				Script:          script,
+				HasRequirements: err == nil,
+			}
+		}(i, s)
 	}
 
+	wg.Wait()
 	c.JSON(http.StatusOK, response)
 }
 
@@ -83,8 +110,15 @@ func CreateScriptHandler(c *gin.Context) {
 		return
 	}
 
+	// Validate path is within scripts/ directory (prevent path traversal)
+	safePath, ok := validateScriptPath(req.Path)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "path must be within the scripts/ directory"})
+		return
+	}
+
 	// Verify file exists
-	if _, err := os.Stat(req.Path); err != nil {
+	if _, err := os.Stat(safePath); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "script file not found"})
 		return
 	}
@@ -92,7 +126,7 @@ func CreateScriptHandler(c *gin.Context) {
 	script := models.Script{
 		ID:          uuid.New().String(),
 		Name:        req.Name,
-		Path:        req.Path,
+		Path:        safePath,
 		Description: req.Description,
 		StartOnBoot: req.StartOnBoot,
 		AutoRestart: req.AutoRestart,
@@ -172,11 +206,17 @@ func DuplicateScriptHandler(c *gin.Context) {
 		return
 	}
 
-	// Create new script with same content
+	// Create new script with same content (path stays within scripts/)
+	copyPath := script.Path + ".copy.py"
+	if _, ok := validateScriptPath(copyPath); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cannot duplicate: path escapes scripts directory"})
+		return
+	}
+
 	newScript := models.Script{
 		ID:          uuid.New().String(),
 		Name:        script.Name + " (copy)",
-		Path:        script.Path + ".copy.py", // Simple copy suffix
+		Path:        copyPath,
 		Description: script.Description,
 		StartOnBoot: false,
 		AutoRestart: false,

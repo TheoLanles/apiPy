@@ -16,7 +16,7 @@ var DB *gorm.DB
 func Init(dataSourceName string) error {
 	var err error
 	DB, err = gorm.Open(sqlite.Open(dataSourceName), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
@@ -28,6 +28,7 @@ func Init(dataSourceName string) error {
 		sqlDB.SetMaxOpenConns(1)
 		DB.Exec("PRAGMA journal_mode=WAL;")
 		DB.Exec("PRAGMA synchronous=NORMAL;")
+		DB.Exec("PRAGMA auto_vacuum=INCREMENTAL;")
 	}
 
 	// Auto-migrate all models

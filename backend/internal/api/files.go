@@ -179,7 +179,12 @@ func GetScriptFileHandler(c *gin.Context) {
 		return
 	}
 
-	// Read file content
+	// Read file content (validate path in case of tampered DB entries)
+	if _, ok := validateScriptPath(script.Path); !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "script path is outside allowed directory"})
+		return
+	}
+
 	content, err := os.ReadFile(script.Path)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read script file"})
@@ -211,6 +216,12 @@ func UpdateScriptFileHandler(c *gin.Context) {
 	var script models.Script
 	if err := database.DB.First(&script, "id = ?", scriptID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "script not found"})
+		return
+	}
+
+	// Validate path before writing (defense-in-depth)
+	if _, ok := validateScriptPath(script.Path); !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "script path is outside allowed directory"})
 		return
 	}
 

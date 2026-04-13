@@ -1,12 +1,14 @@
 package ws
 
 import (
+	"log"
 	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/theo/pyrunner/internal/database"
+	"github.com/theo/pyrunner/internal/middleware"
 	"github.com/theo/pyrunner/internal/models"
 )
 
@@ -14,7 +16,11 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins for now
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true // Same-origin requests (no Origin header)
+		}
+		return middleware.IsAllowedOrigin(origin)
 	},
 }
 
@@ -60,9 +66,38 @@ func getOrCreateHub(scriptID string) *Hub {
 }
 
 // LogsWebSocketHandler establishes WebSocket connection for log streaming
+// Requires authentication via cookie (auth_token) or query parameter (?token=)
 func LogsWebSocketHandler(c *gin.Context) {
 	scriptID := c.Param("id")
 
+	// --- Authenticate before upgrading ---
+	tokenString := ""
+
+	// 1. Try cookie first (same mechanism as REST API)
+	if cookie, err := c.Cookie("auth_token"); err == nil && cookie != "" {
+		tokenString = cookie
+	}
+
+	// 2. Fallback to query parameter (for JS WebSocket which can't set cookies in some contexts)
+	if tokenString == "" {
+		tokenString = c.Query("token")
+	}
+
+	if tokenString == "" {
+		c.JSON(401, gin.H{"error": "authentication required for WebSocket"})
+		return
+	}
+
+	// Validate JWT
+	userID, _, err := middleware.ValidateJWT(tokenString)
+	if err != nil || userID == "" {
+		c.JSON(401, gin.H{"error": "invalid or expired token"})
+		return
+	}
+
+	log.Printf("WebSocket authenticated: user=%s script=%s", userID, scriptID)
+
+	// --- Upgrade connection ---
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return

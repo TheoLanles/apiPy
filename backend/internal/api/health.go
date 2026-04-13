@@ -22,7 +22,7 @@ func HealthHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":       "ok",
 		"message":      "apiPy API is running",
-		"version":      "v1.2.8",
+		"version":      "v1.2.9",
 		"setup_needed": setupNeeded,
 		"oidc_enabled": settings.OIDCEnabled,
 	})

@@ -48,6 +48,7 @@ export interface AuthResponse {
 export interface Settings {
   id: string;
   discord_webhook_url: string;
+  cors_domain: string;
   oidc_enabled: boolean;
   oidc_issuer: string;
   oidc_client_id: string;

@@ -55,6 +55,8 @@ type ProcessState struct {
 type Settings struct {
 	ID                uint   `gorm:"primaryKey" json:"id"`
 	DiscordWebhookURL string `json:"discord_webhook_url"`
+	JWTSecret         string `gorm:"column:jwt_secret" json:"-"` // Auto-generated, never exposed via API
+	CORSDomain        string `json:"cors_domain"`                // Allowed origin for CORS (e.g. https://pyrunner.example.com)
 	OIDCEnabled       bool   `json:"oidc_enabled"`
 	OIDCIssuer        string `json:"oidc_issuer"`
 	OIDCClientID      string `json:"oidc_client_id"`
