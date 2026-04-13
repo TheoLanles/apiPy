@@ -43,6 +43,14 @@ If you are on a Linux server, you can deploy **apiPy** instantly with this one-l
 curl -sSL https://raw.githubusercontent.com/TheoLanles/apiPy/main/install.sh | sudo bash
 ```
 
+### Proxmox VE LXC Deployment
+
+Deploy **apiPy** as a high-performance LXC container on Proxmox with a single command:
+
+```bash
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/TheoLanles/apiPy/main/proxmox-lxc.sh)"
+```
+
 ---
 
 ## 🚀 Getting Started (Manual)
