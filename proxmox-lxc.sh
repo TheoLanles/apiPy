@@ -47,6 +47,7 @@ msg_info "Installing ${APP}..."
 # We execute the pure installation script inside the LXC
 pct exec $CTID -- bash -c "$(curl -fsSL https://raw.githubusercontent.com/TheoLanles/apiPy/main/install.sh)"
 
+IP=$(pct exec $CTID hostname -I | awk '{print $1}')
 msg_ok "Completed successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
-echo -e "${INFO}${YW} Access the dashboard at: ${BL}http://<LXC_IP>:8080${CL}"
+echo -e "${INFO}${YW} Access the dashboard at: ${BL}http://${IP}:8080${CL}"
