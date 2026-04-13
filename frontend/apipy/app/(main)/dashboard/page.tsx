@@ -46,12 +46,15 @@ export default function DashboardPage() {
   }, [loadStatuses]);
 
   const runningCount = useMemo(() => 
-    Object.values(states).filter(s => s.status === "running").length, 
-  [states]);
+    scripts.filter(script => states[script.id]?.status === "running").length, 
+  [scripts, states]);
 
   const errorCount = useMemo(() => 
-    Object.values(states).filter(s => s.status === "error" || s.status === "crashed").length,
-  [states]);
+    scripts.filter(script => {
+      const status = states[script.id]?.status;
+      return status === "error" || status === "crashed";
+    }).length,
+  [scripts, states]);
 
   const tableStatusStyle = (status: string) => {
     if (status === "running") return { background: "#DCFCE7", color: "#166534", border: "1px solid #BBF7D0" };
