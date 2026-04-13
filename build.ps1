@@ -4,10 +4,9 @@ $ProjectRoot = Get-Location
 $FrontendDir = Join-Path $ProjectRoot "frontend/apipy"
 $BackendDir = Join-Path $ProjectRoot "backend"
 $AssetsDistDir = Join-Path $BackendDir "internal/assets/dist"
-$BinaryPath = Join-Path $BackendDir "bin/pyrunner.exe"
+$BinaryPath = Join-Path $BackendDir "bin/apiPy.exe"
 
-Write-Host "--- Stopping any running pyrunner/apiPy instances ---" -ForegroundColor Yellow
-Stop-Process -Name "pyrunner" -Force -ErrorAction SilentlyContinue
+Write-Host "--- Stopping any running apiPy instances ---" -ForegroundColor Yellow
 Stop-Process -Name "apiPy" -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
@@ -18,8 +17,8 @@ if (Test-Path $BinaryPath) {
 if (Test-Path (Join-Path $BackendDir "bin/apiPy.exe")) {
     Remove-Item (Join-Path $BackendDir "bin/apiPy.exe") -Force -ErrorAction SilentlyContinue
 }
-if (Test-Path (Join-Path $BackendDir "bin/pyrunner-linux")) {
-    Remove-Item (Join-Path $BackendDir "bin/pyrunner-linux") -Force -ErrorAction SilentlyContinue
+if (Test-Path (Join-Path $BackendDir "bin/apiPy")) {
+    Remove-Item (Join-Path $BackendDir "bin/apiPy") -Force -ErrorAction SilentlyContinue
 }
 if (Test-Path (Join-Path $FrontendDir ".next")) {
     Remove-Item -Recurse -Force (Join-Path $FrontendDir ".next")
@@ -57,7 +56,7 @@ Write-Host "--- Building Windows Binary ---" -ForegroundColor Cyan
 $env:GOOS = "windows"
 $env:GOARCH = "amd64"
 $env:CGO_ENABLED = "0"
-go build -ldflags="-s -w" -v -o bin/pyrunner.exe ./cmd/pyrunner
+go build -ldflags="-s -w" -v -o bin/apiPy.exe ./cmd/pyrunner
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Windows build failed!" -ForegroundColor Red
     Pop-Location
@@ -69,15 +68,15 @@ Write-Host "--- Building Linux Binary ---" -ForegroundColor Cyan
 $env:GOOS = "linux"
 $env:GOARCH = "amd64"
 $env:CGO_ENABLED = "0"
-go build -ldflags="-s -w" -v -o bin/pyrunner-linux ./cmd/pyrunner
+go build -ldflags="-s -w" -v -o bin/apiPy ./cmd/pyrunner
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Linux build failed!" -ForegroundColor Red
     Pop-Location
     exit 1
 }
 
-$winFile = Get-Item "bin/pyrunner.exe"
-$linFile = Get-Item "bin/pyrunner-linux"
+$winFile = Get-Item "bin/apiPy.exe"
+$linFile = Get-Item "bin/apiPy"
 Write-Host ("`nWindows binary: " + $winFile.FullName) -ForegroundColor Green
 Write-Host ("Linux binary:   " + $linFile.FullName) -ForegroundColor Green
 Pop-Location

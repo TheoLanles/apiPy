@@ -52,27 +52,49 @@ curl -sSL https://raw.githubusercontent.com/TheoLanles/apiPy/main/install.sh | s
 - [Node.js](https://nodejs.org/) (v18 or higher)
 - [Python](https://www.python.org/) installed and in your system PATH
 
-### 1. Setup Backend
+### 1. Build the Unified Binary
+PyRunner is designed to run as a single, standalone executable that includes both the backend and the frontend assets. The build script automates frontend compilation, asset embedding, and multi-target binary generation.
+
+```powershell
+# On Windows (PowerShell)
+.\build.ps1
+```
+
+**What this script does:**
+1. **Frontend Compilation**: Builds the Next.js app into static files (`out/` folder).
+2. **Asset Embedding**: Transfers assets to the Go backend for compilation.
+3. **Multi-Target Build**: Generates `bin/apiPy.exe` (Windows) and `bin/apiPy` (Linux).
+
+### 2. Run the Application
+After building, you can run the generated executable from the `backend/bin` directory.
+
+```powershell
+# Windows
+.\backend\bin\apiPy.exe
+
+# Linux
+./backend/bin/apiPy
+```
+*The Dashboard will be accessible at `http://localhost:8080`.*
+
+---
+
+## 🛠️ Development Mode
+
+If you wish to modify the code with hot-reloading:
+
+### Backend (Hot Reload)
 ```bash
 cd backend
-# Copy environment file
-cp .env.example .env
-# Install dependencies
-go mod download
-# Run in development mode
-make dev
+go run ./cmd/pyrunner
 ```
-*The API will be available at `http://localhost:8080`.*
 
-### 2. Setup Frontend
+### Frontend (Hot Reload)
 ```bash
 cd frontend/apipy
-# Install dependencies
 npm install
-# Start development server
 npm run dev
 ```
-*The Dashboard will be available at `http://localhost:3000`.*
 
 ---
 
@@ -86,9 +108,7 @@ api-py/
 │   ├── bin/            # Compiled binaries
 │   └── pyrunner.db     # SQLite Database
 ├── frontend/           # Next.js Application
-│   └── apipy/          # Main frontend source
-├── release/            # Build distributions
-└── scripts/            # Repository for uploaded scripts
+   └── apipy/           # Main frontend source
 ```
 
 ---
@@ -110,4 +130,4 @@ The backend is configured via `.env`:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-Developed with ❤️ by [Theo](https://github.com/theo)
+Developed with ❤️ by [Theo](https://github.com/TheoLanles)

@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
@@ -10,6 +12,23 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar_expanded");
+    if (saved !== null) {
+      setIsExpanded(saved === "true");
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save state to localStorage when it changes
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("sidebar_expanded", String(isExpanded));
+    }
+  }, [isExpanded, isLoaded]);
 
   const handleLogout = async () => {
     try {
