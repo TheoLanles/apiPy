@@ -169,6 +169,17 @@ func IsAllowedOrigin(origin string) bool {
 	return origin == allowed
 }
 
+// IsSecureRequest checks if the connection should be treated as HTTPS
+// by checking TLS, X-Forwarded-Proto, or the configured CORS domain.
+func IsSecureRequest(c *gin.Context) bool {
+	if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+		return true
+	}
+	corsMu.RLock()
+	defer corsMu.RUnlock()
+	return strings.HasPrefix(corsDomain, "https://")
+}
+
 // ValidateJWT parses and validates a JWT token string, returns (userID, role, error)
 func ValidateJWT(tokenString string) (string, string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {

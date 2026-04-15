@@ -59,7 +59,9 @@ func UploadScriptHandler(c *gin.Context) {
 	}
 
 	// Save main script file
-	filePath := filepath.Join(scriptDir, file.Filename)
+	// DEFENSE: Use filepath.Base to prevent Path Traversal
+	safeFilename := filepath.Base(file.Filename)
+	filePath := filepath.Join(scriptDir, safeFilename)
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
 		os.RemoveAll(scriptDir)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save script file"})

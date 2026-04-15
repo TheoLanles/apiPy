@@ -88,7 +88,8 @@ func SetupHandler(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("auth_token", tokenString, 86400, "/", "", false, true)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("auth_token", tokenString, 86400, "/", "", middleware.IsSecureRequest(c), true)
 
 	c.JSON(http.StatusOK, AuthResponse{
 		ID:       user.ID,
@@ -132,7 +133,8 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("auth_token", tokenString, 86400, "/", "", false, true)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("auth_token", tokenString, 86400, "/", "", middleware.IsSecureRequest(c), true)
 
 	c.JSON(http.StatusOK, AuthResponse{
 		ID:       user.ID,
@@ -145,7 +147,8 @@ func LoginHandler(c *gin.Context) {
 
 // LogoutHandler clears the auth token
 func LogoutHandler(c *gin.Context) {
-	c.SetCookie("auth_token", "", -1, "/", "", false, true)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("auth_token", "", -1, "/", "", middleware.IsSecureRequest(c), true)
 	c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
 
@@ -194,7 +197,8 @@ func OIDCLoginHandler(c *gin.Context) {
 	}
 
 	state := uuid.New().String()
-	c.SetCookie("oidc_state", state, 300, "/", "", false, true)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("oidc_state", state, 300, "/", "", middleware.IsSecureRequest(c), true)
 
 	c.Redirect(http.StatusFound, oauth2Config.AuthCodeURL(state))
 }
@@ -213,7 +217,8 @@ func OIDCCallbackHandler(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/login?error=invalid_state")
 		return
 	}
-	c.SetCookie("oidc_state", "", -1, "/", "", false, true)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("oidc_state", "", -1, "/", "", middleware.IsSecureRequest(c), true)
 
 	provider, err := oidc.NewProvider(c.Request.Context(), settings.OIDCIssuer)
 	if err != nil {
@@ -299,6 +304,7 @@ func OIDCCallbackHandler(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("auth_token", tokenString, 86400, "/", "", false, true)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("auth_token", tokenString, 86400, "/", "", middleware.IsSecureRequest(c), true)
 	c.Redirect(http.StatusFound, "/dashboard")
 }

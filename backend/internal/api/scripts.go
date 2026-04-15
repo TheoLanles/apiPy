@@ -25,7 +25,8 @@ func validateScriptPath(path string) (string, bool) {
 		return "", false
 	}
 	// Path must be inside scripts/ directory
-	if !strings.HasPrefix(absPath, scriptsDir+string(os.PathSeparator)) && absPath != scriptsDir {
+	rel, err := filepath.Rel(scriptsDir, absPath)
+	if err != nil || strings.HasPrefix(rel, "..") {
 		return "", false
 	}
 	return absPath, true
