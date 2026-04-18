@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { Loader2, Globe } from "lucide-react";
+import { IconLoader2, IconGlobe } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
 
 function LoginContent() {
@@ -26,15 +26,14 @@ function LoginContent() {
           router.push("/setup");
           return;
         }
-        
+
         setOidcEnabled(health.oidc_enabled);
-        
-        // Handle OIDC errors from redirect
+
         const errorParam = searchParams.get("error");
         if (errorParam) {
           setError(`OIDC Error: ${errorParam.replace(/_/g, " ")}`);
         }
-        
+
         setIsLoading(false);
       } catch {
         setIsLoading(false);
@@ -66,28 +65,17 @@ function LoginContent() {
 
   if (isLoading) {
     return (
-      <div
-        style={{ background: "#F5F0E8" }}
-        className="flex flex-col items-center justify-center min-h-screen animate-in fade-in duration-700"
-      >
-        <div className="flex flex-col items-center gap-6">
-          {/* Pulsing Logo Container */}
-          <div className="relative">
-            <div className="absolute inset-0 rounded-3xl bg-emerald-800/10 animate-ping duration-[2000ms]" />
-            <div
-              className="relative w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl"
-              style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
-            >
-              <img src="/logo.svg" alt="apiPy" className="w-12 h-12" />
+      <div className="page page-center">
+        <div className="container container-slim py-4">
+          <div className="text-center py-5">
+            <div className="mb-3">
+              <span className="fs-1 fw-bold tracking-tighter text-primary">
+                <span className="text-accent me-1">api</span>PY
+              </span>
             </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            <span style={{ fontWeight: 800, fontSize: 24, letterSpacing: 2, color: "#0D5C45" }}>
-              apiPy
-            </span>
-            <div className="flex items-center gap-2 text-emerald-800/60 text-sm font-medium">
-              <Loader2 className="h-3 w-3 animate-spin" />
+            <div className="text-secondary small">Establishing secure session...</div>
+            <div className="progress progress-sm mt-3 mx-auto" style={{ maxWidth: '150px' }}>
+              <div className="progress-bar progress-bar-indeterminate bg-primary"></div>
             </div>
           </div>
         </div>
@@ -96,149 +84,88 @@ function LoginContent() {
   }
 
   return (
-    <div
-      className="flex items-center justify-center min-h-screen px-4"
-      style={{ background: "#F5F0E8" }}
-    >
-      <div className="w-full max-w-sm">
-
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span style={{ fontFamily: "sans-serif", fontWeight: 800, fontSize: 26, letterSpacing: 2, color: "#0D5C45" }}>
-              apiPy
-            </span>
-          </div>
-          <p style={{ color: "#4A7C65", fontSize: 13, marginTop: 4 }}>
-            Sign in to your account
-          </p>
+    <div className="page page-center">
+      <div className="container container-tight py-4">
+        <div className="text-center mb-5">
+          <span className="fs-1 fw-bold tracking-tighter text-primary">
+            <span className="text-accent me-1">api</span>PY
+          </span>
+          <div className="text-secondary mt-1">Python Script Automation Platform</div>
         </div>
 
-        {/* Card */}
-        <div
-          className="rounded-2xl p-7"
-          style={{
-            background: "#FFFFFF",
-            border: "1px solid #D6E8DC",
-          }}
-        >
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="card card-md card-premium shadow-sm">
+          <div className="card-body">
+            <h2 className="h2 text-center mb-4">Welcome back</h2>
+            <p className="text-secondary text-center mb-4">Log in to manage your scripts</p>
 
             {error && (
-              <div
-                className="rounded-lg px-3 py-2 text-sm"
-                style={{ background: "#FEE2E2", color: "#991B1B", border: "1px solid #FCA5A5" }}
-              >
-                {error}
+              <div className="alert alert-danger mb-4" role="alert">
+                <div className="d-flex">
+                  <div>{error}</div>
+                </div>
               </div>
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#4A7C65", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                Username
-              </label>
-              <input
-                type="text"
-                placeholder="your-username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none transition"
-                style={{
-                  background: "#F5F0E8",
-                  border: "1px solid #C8DDD0",
-                  color: "#0D5C45",
-                  fontSize: 14,
-                }}
-                onFocus={(e) => (e.target.style.borderColor = "#00C853")}
-                onBlur={(e) => (e.target.style.borderColor = "#C8DDD0")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#4A7C65", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                Password
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none transition"
-                style={{
-                  background: "#F5F0E8",
-                  border: "1px solid #C8DDD0",
-                  color: "#0D5C45",
-                  fontSize: 14,
-                }}
-                onFocus={(e) => (e.target.style.borderColor = "#00C853")}
-                onBlur={(e) => (e.target.style.borderColor = "#C8DDD0")}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-lg py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition"
-              style={{
-                background: "#0D5C45",
-                color: "#F5F0E8",
-                marginTop: 4,
-                opacity: isSubmitting ? 0.7 : 1,
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-              }}
-            >
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isSubmitting ? "Signing in…" : "Sign in"}
-            </button>
-
-          </form>
-
-          {oidcEnabled && (
-            <div className="mt-6">
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#D6E8DC]"></div>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-3 text-[#4A7C65] font-semibold tracking-wider">Or continue with</span>
+            <form onSubmit={handleSubmit} autoComplete="off">
+              <div className="mb-3">
+                <label className="form-label">Username</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="your-username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Password</label>
+                <div className="input-group input-group-flat">
+                  <input
+                    type="password"
+                    className="form-control"
+                    placeholder="Password"
+                    autoComplete="off"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                 </div>
               </div>
+              <div className="form-footer">
+                <button
+                  type="submit"
+                  className={`btn btn-primary w-100 ${isSubmitting ? 'disabled' : ''}`}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && <IconLoader2 className="me-2 animate-spin" size={16} />}
+                  Sign in
+                </button>
+              </div>
+            </form>
 
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={() => window.location.href = `${api.getBaseUrl()}/auth/oidc/login`}
-                className="w-full rounded-lg py-2.5 text-sm font-semibold flex items-center justify-center gap-3 transition group"
-                style={{
-                  background: "#F5F0E8",
-                  color: "#0D5C45",
-                  border: "1px solid #C8DDD0",
-                  cursor: isSubmitting ? "not-allowed" : "pointer",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#EBE5D9")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#F5F0E8")}
-              >
-                <Globe className="h-4 w-4 text-[#0D5C45] group-hover:scale-110 transition-transform" />
-                Login with OpenID
-              </button>
-            </div>
-          )}
+            {oidcEnabled && (
+              <>
+                <div className="hr-text">or continue with</div>
+                <div className="card-btn-payload">
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => window.location.href = `${api.getBaseUrl()}/auth/oidc/login`}
+                    className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
+                  >
+                    <IconGlobe size={18} />
+                    OpenID Connect
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-sm mt-5" style={{ color: "#4A7C65" }}>
-          First time here?{" "}
-          <button
-            type="button"
-            onClick={() => router.push("/setup")}
-            style={{ color: "#0D5C45", fontWeight: 700, textDecoration: "underline", background: "none", border: "none", cursor: "pointer" }}
-          >
-            Create an account
-          </button>
-        </p>
-
+        <div className="text-center text-secondary mt-3">
+          First time here? <a href="/setup" className="link-primary fw-bold" tabIndex={-1}>Create an account</a>
+        </div>
       </div>
     </div>
   );
@@ -247,11 +174,12 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div
-        style={{ background: "#F5F0E8" }}
-        className="flex flex-col items-center justify-center min-h-screen"
-      >
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-800" />
+      <div className="page page-center">
+        <div className="container container-slim py-4 text-center">
+          <span className="fs-2 fw-bold tracking-tighter text-primary animate-pulse">
+            <span className="text-accent me-1">api</span>PY
+          </span>
+        </div>
       </div>
     }>
       <LoginContent />

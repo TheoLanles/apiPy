@@ -3,7 +3,13 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { api } from "@/lib/api";
 import type { Script, ProcessState } from "@/types";
-import { Loader2 } from "lucide-react";
+import { 
+  IconLoader2, 
+  IconFileCode, 
+  IconPlayerPlay, 
+  IconAlertCircle,
+  IconCircleFilled
+} from "@tabler/icons-react";
 import { StatsCard } from "@/components/StatsCard";
 
 export default function DashboardPage() {
@@ -31,7 +37,6 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     const init = async () => {
       await Promise.all([loadScripts(), loadStatuses()]);
@@ -39,7 +44,6 @@ export default function DashboardPage() {
     init();
   }, [loadScripts, loadStatuses]);
 
-  // Polling for statuses every 5 seconds
   useEffect(() => {
     const interval = setInterval(loadStatuses, 5000);
     return () => clearInterval(interval);
@@ -56,74 +60,111 @@ export default function DashboardPage() {
     }).length,
   [scripts, states]);
 
-  const tableStatusStyle = (status: string) => {
-    if (status === "running") return { background: "#DCFCE7", color: "#166534", border: "1px solid #BBF7D0" };
-    if (status === "error" || status === "crashed") return { background: "#FEE2E2", color: "#991B1B", border: "1px solid #FCA5A5" };
-    return { background: "#FFEDD5", color: "#9A3412", border: "1px solid #FED7AA" };
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "running": return "bg-success";
+      case "error":
+      case "crashed": return "bg-danger";
+      case "stopped": return "bg-secondary";
+      default: return "bg-warning";
+    }
   };
 
   return (
-    <div className="px-8 py-10" style={{ background: "#F5F0E8" }}>
-
-      {/* Header */}
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0D5C45", marginBottom: 28, letterSpacing: "-0.01em" }}>
-        Dashboard
-      </h1>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <StatsCard label="Total scripts" value={scripts.length} color="#0D5C45" />
-        <StatsCard label="Running" value={runningCount} color="#16A34A" />
-        <StatsCard label="Errors" value={errorCount} color="#DC2626" />
-      </div>
-
-      {/* Scripts table */}
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
-      >
-        <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>Scripts status</p>
-        </div>
-
-        <div className="px-5 py-4">
-          {isLoading ? (
-            <div className="flex items-center gap-2 py-6" style={{ color: "#4A7C65" }}>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span style={{ fontSize: 13 }}>Loading…</span>
-            </div>
-          ) : scripts.length === 0 ? (
-            <p className="py-6 text-center" style={{ fontSize: 13, color: "#4A7C65" }}>No scripts yet</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {scripts.map((script) => {
-                const status = states[script.id]?.status || "unknown";
-                return (
-                  <div
-                    key={script.id}
-                    className="flex items-center justify-between rounded-xl px-4 py-3 transition"
-                    style={{ background: "#F5F0E8", border: "1px solid #C8DDD0" }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = "#0D5C45")}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = "#C8DDD0")}
-                  >
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>{script.name}</p>
-                      <p style={{ fontSize: 12, color: "#4A7C65", marginTop: 2 }}>{script.path}</p>
-                    </div>
-                    <span
-                      className="rounded-full px-3 py-1"
-                      style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", ...tableStatusStyle(status) }}
-                    >
-                      {status}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+    <div className="container-xl">
+      {/* Page Header */}
+      <div className="page-header d-print-none mb-4">
+        <div className="row align-items-center">
+          <div className="col">
+            <h2 className="page-title fw-bold tracking-tight">
+              Dashboard
+            </h2>
+            <div className="text-secondary mt-1">Overview of your scripts and system status.</div>
+          </div>
         </div>
       </div>
 
+      <div className="row row-cards mb-4">
+        <div className="col-sm-6 col-lg-4">
+          <StatsCard 
+            label="Total scripts" 
+            value={scripts.length} 
+            color="primary" 
+            icon={IconFileCode} 
+          />
+        </div>
+        <div className="col-sm-6 col-lg-4">
+          <StatsCard 
+            label="Running" 
+            value={runningCount} 
+            color="success" 
+            icon={IconPlayerPlay} 
+          />
+        </div>
+        <div className="col-sm-6 col-lg-4">
+          <StatsCard 
+            label="Errors" 
+            value={errorCount} 
+            color="danger" 
+            icon={IconAlertCircle} 
+          />
+        </div>
+      </div>
+
+      <div className="row row-cards">
+        <div className="col-12">
+          <div className="card card-premium shadow-sm">
+            <div className="card-header">
+              <h3 className="card-title">Scripts status</h3>
+            </div>
+            
+            {isLoading ? (
+              <div className="card-body py-5 text-center">
+                <IconLoader2 className="animate-spin text-secondary mb-2" size={24} />
+                <div className="text-secondary small">Loading scripts data...</div>
+              </div>
+            ) : scripts.length === 0 ? (
+              <div className="card-body py-5 text-center text-secondary">
+                No scripts configured yet.
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-vcenter table-mobile-md card-table">
+                  <thead>
+                    <tr>
+                      <th className="text-uppercase tracking-widest small fw-bold text-secondary py-3">Name</th>
+                      <th className="text-uppercase tracking-widest small fw-bold text-secondary py-3">Path</th>
+                      <th className="text-uppercase tracking-widest small fw-bold text-secondary py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scripts.map((script) => {
+                      const status = states[script.id]?.status || "unknown";
+                      return (
+                        <tr key={script.id} className="cursor-pointer hover:bg-light transition-colors">
+                          <td className="py-3">
+                            <div className="d-flex align-items-center">
+                              <span className="table-accent-bar"></span>
+                              <div className="fw-bold text-reset">{script.name}</div>
+                            </div>
+                          </td>
+                          <td className="text-secondary">
+                            {script.path}
+                          </td>
+                          <td>
+                            <span className={`badge ${getStatusBadge(status)} badge-blink me-2`}></span>
+                            <span className="text-capitalize">{status}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

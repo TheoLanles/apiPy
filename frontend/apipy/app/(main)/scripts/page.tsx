@@ -4,7 +4,14 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import type { Script, ProcessState } from "@/types";
-import { Loader2, Plus } from "lucide-react";
+import { 
+  IconLoader2, 
+  IconPlus, 
+  IconPlayerPlay, 
+  IconPlayerStop,
+  IconFileText,
+  IconX
+} from "@tabler/icons-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { ScriptListItem } from "./components/ScriptListItem";
@@ -27,7 +34,7 @@ export default function ScriptsPage() {
   const loadScripts = useCallback(async () => {
     try {
       const data = await api.getScripts();
-      setScripts(data);
+      setScripts(data || []);
     } catch (err) {
       console.error("Failed to load scripts:", err);
     } finally {
@@ -44,7 +51,6 @@ export default function ScriptsPage() {
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     const init = async () => {
       await Promise.all([loadScripts(), loadStatuses()]);
@@ -52,7 +58,6 @@ export default function ScriptsPage() {
     init();
   }, [loadScripts, loadStatuses]);
 
-  // Polling for statuses every 5 seconds
   useEffect(() => {
     const interval = setInterval(loadStatuses, 5000);
     return () => clearInterval(interval);
@@ -67,7 +72,7 @@ export default function ScriptsPage() {
   }, [scripts, searchQuery]);
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === filteredScripts.length) {
+    if (selectedIds.size === filteredScripts.length && filteredScripts.length > 0) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(filteredScripts.map(s => s.id)));
@@ -126,135 +131,119 @@ export default function ScriptsPage() {
   };
 
   return (
-    <div className="px-8 py-10 pb-32" style={{ background: "#F5F0E8" }}>
-
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-7 gap-4">
-        <div className="flex items-center gap-4">
-          <input 
-            type="checkbox" 
-            checked={selectedIds.size === filteredScripts.length && filteredScripts.length > 0}
-            onChange={toggleSelectAll}
-            className="w-5 h-5 accent-emerald-800 cursor-pointer"
-          />
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0D5C45", letterSpacing: "-0.01em" }}>
-            Scripts
-          </h1>
-        </div>
-        
-        <div className="flex items-center gap-3 flex-1 md:max-w-md">
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search scripts by name, path or info..."
-          />
-
-          {isAdmin && (
-            <Link href="/scripts/new">
-              <button
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition whitespace-nowrap"
-                style={{ background: "#0D5C45", color: "#F5F0E8", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#0a4a37"}
-                onMouseLeave={e => e.currentTarget.style.background = "#0D5C45"}
-              >
-                <Plus size={15} />
+    <div className="container-xl">
+      {/* Page Header */}
+      <div className="page-header d-print-none mb-4">
+        <div className="row align-items-center">
+          <div className="col-auto">
+            <span className="form-check form-check-inline m-0 pt-1">
+              <input 
+                className="form-check-input" 
+                type="checkbox" 
+                checked={selectedIds.size === filteredScripts.length && filteredScripts.length > 0}
+                onChange={toggleSelectAll}
+              />
+            </span>
+          </div>
+          <div className="col">
+            <h2 className="page-title fw-bold tracking-tight">
+              Scripts
+            </h2>
+            <div className="text-secondary mt-1 small text-uppercase tracking-wider fw-medium">Manage and monitor your Python processes</div>
+          </div>
+          <div className="col-auto ms-auto d-print-none d-flex align-items-center gap-3">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Filter scripts..."
+              className="w-auto"
+            />
+            {isAdmin && (
+              <Link href="/scripts/new" className="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center">
+                <IconPlus size={16} className="me-1" />
                 New script
-              </button>
-            </Link>
-          )}
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* States */}
       {isLoading ? (
-        <div className="flex items-center gap-2 py-10" style={{ color: "#4A7C65" }}>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span style={{ fontSize: 13 }}>Loading…</span>
+        <div className="py-5 text-center">
+          <IconLoader2 className="animate-spin text-secondary mb-2" size={24} />
+          <div className="text-secondary small">Loading scripts...</div>
         </div>
       ) : filteredScripts.length === 0 ? (
-        <div
-          className="rounded-2xl flex flex-col items-center justify-center py-16"
-          style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
-        >
-          <p style={{ fontSize: 13, color: "#4A7C65" }}>{searchQuery ? "No scripts match your search" : "No scripts yet"}</p>
-          {!searchQuery && (
-            <Link href="/scripts/new">
-              <button
-                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl"
-                style={{ background: "#0D5C45", color: "#F5F0E8", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
-              >
-                <Plus size={14} /> Create your first script
-              </button>
-            </Link>
+        <div className="empty">
+          <div className="empty-img">
+            <IconFileText size={48} stroke={1} className="text-secondary opacity-20" />
+          </div>
+          <p className="empty-title">No scripts found</p>
+          <p className="empty-subtitle text-secondary">
+            {searchQuery ? "Try adjusting your search criteria." : "Get started by creating your first automated script."}
+          </p>
+          {!searchQuery && isAdmin && (
+            <div className="empty-action">
+              <Link href="/scripts/new" className="btn btn-primary">
+                <IconPlus size={18} className="me-2" />
+                New script
+              </Link>
+            </div>
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="row row-cards mb-5">
           {filteredScripts.map((script) => (
-            <ScriptListItem
-              key={script.id}
-              script={script}
-              status={states[script.id]?.status || "unknown"}
-              isSelected={selectedIds.has(script.id)}
-              isAdmin={isAdmin}
-              onToggleSelect={toggleSelect}
-              onDelete={(id) => setDeleteDialog({ isOpen: true, scriptId: id })}
-            />
+            <div key={script.id} className="col-12">
+              <ScriptListItem
+                script={script}
+                status={states[script.id]?.status || "unknown"}
+                isSelected={selectedIds.has(script.id)}
+                isAdmin={isAdmin}
+                onToggleSelect={toggleSelect}
+                onDelete={(id) => setDeleteDialog({ isOpen: true, scriptId: id })}
+              />
+            </div>
           ))}
         </div>
       )}
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 duration-300">
-          <div 
-            className="flex items-center gap-6 px-6 py-4 rounded-2xl shadow-2xl border"
-            style={{ background: "#0D5C45", borderColor: "#0a4a37", color: "#F5F0E8" }}
-          >
-            <div className="flex flex-col">
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{selectedIds.size} Script{selectedIds.size > 1 ? 's' : ''} Selected</span>
-              <span style={{ fontSize: 11, color: "rgba(245,240,232,0.6)" }}>Mass operation ready</span>
+        <div className="sticky-bottom bg-primary text-white p-3 rounded-top-4 shadow-lg mx-3 mb-0 z-index-100 animate__animated animate__slideInUp">
+          <div className="container-xl">
+            <div className="row align-items-center">
+              <div className="col">
+                <div className="fw-bold">{selectedIds.size} Script{selectedIds.size > 1 ? 's' : ''} selected</div>
+                <div className="small text-white-50">Bulk operations will be applied to all selected items.</div>
+              </div>
+              <div className="col-auto d-flex gap-2">
+                <button
+                  onClick={handleBulkStart}
+                  disabled={isBulkLoading}
+                  className="btn btn-success"
+                >
+                  {isBulkLoading ? <IconLoader2 size={16} className="me-2 animate-spin" /> : <IconPlayerPlay size={16} className="me-2" />}
+                  Mass Start
+                </button>
+                <button
+                  onClick={handleBulkStop}
+                  disabled={isBulkLoading}
+                  className="btn btn-danger"
+                >
+                  {isBulkLoading ? <IconLoader2 size={16} className="me-2 animate-spin" /> : <IconPlayerStop size={16} className="me-2" />}
+                  Mass Stop
+                </button>
+                <div className="vr mx-2 bg-white-50 opacity-20"></div>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="btn btn-ghost-light btn-icon"
+                  title="Deselect all"
+                >
+                  <IconX size={20} />
+                </button>
+              </div>
             </div>
-
-            <div className="h-8 w-px" style={{ background: "rgba(255,255,255,0.1)" }} />
-
-            <div className="flex gap-2">
-              <button
-                onClick={handleBulkStart}
-                disabled={isBulkLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl transition font-semibold"
-                style={{ background: "#DCFCE7", color: "#166534", fontSize: 12, border: "none", cursor: "pointer" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#BBF7D0"}
-                onMouseLeave={e => e.currentTarget.style.background = "#DCFCE7"}
-              >
-                {isBulkLoading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-                Mass Start
-              </button>
-
-              <button
-                onClick={handleBulkStop}
-                disabled={isBulkLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl transition font-semibold"
-                style={{ background: "#FEE2E2", color: "#991B1B", fontSize: 12, border: "none", cursor: "pointer" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#FECACA"}
-                onMouseLeave={e => e.currentTarget.style.background = "#FEE2E2"}
-              >
-                {isBulkLoading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-                Mass Stop
-              </button>
-            </div>
-
-            <div className="h-8 w-px" style={{ background: "rgba(255,255,255,0.1)" }} />
-
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="px-3 py-2 rounded-lg text-xs font-medium transition"
-              style={{ color: "rgba(245,240,232,0.6)", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#F5F0E8"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "rgba(245,240,232,0.6)"; e.currentTarget.style.background = "transparent"; }}
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}

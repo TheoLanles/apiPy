@@ -4,8 +4,14 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import type { User } from "@/types";
-import { Loader2, Plus, Trash2, X } from "lucide-react";
+import { 
+  IconLoader2, 
+  IconPlus, 
+  IconTrash, 
+  IconX 
+} from "@tabler/icons-react";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export default function UsersPage() {
   const user = useAuthStore((state) => state.user);
@@ -61,204 +67,173 @@ export default function UsersPage() {
 
   if (user?.role !== "admin") {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F5F0E8" }}>
-        <p style={{ color: "#4A7C65", fontSize: 14 }}>Access denied</p>
+      <div className="container container-slim py-4">
+        <div className="text-center text-secondary">
+          Access denied.
+        </div>
       </div>
     );
   }
 
-  const inputStyle = {
-    width: "100%",
-    boxSizing: "border-box" as const,
-    background: "#F5F0E8",
-    border: "1px solid #C8DDD0",
-    borderRadius: 10,
-    padding: "9px 12px",
-    fontSize: 13,
-    color: "#0D5C45",
-    outline: "none",
-  };
-
-  const labelStyle = {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 600,
-    color: "#4A7C65",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.06em",
-    marginBottom: 6,
-  };
-
   return (
-    <div className="px-8 py-10" style={{ background: "#F5F0E8" }}>
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-7">
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0D5C45", letterSpacing: "-0.01em" }}>
-          Users
-        </h1>
-        <button
-          onClick={() => setShowDialog(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl transition"
-          style={{ background: "#0D5C45", color: "#F5F0E8", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
-          onMouseEnter={e => e.currentTarget.style.background = "#0a4a37"}
-          onMouseLeave={e => e.currentTarget.style.background = "#0D5C45"}
-        >
-          <Plus size={15} /> Create user
-        </button>
+    <div className="container-xl">
+      {/* Page Header */}
+      <div className="page-header d-print-none mb-4">
+        <div className="row align-items-center">
+          <div className="col">
+            <h2 className="page-title fw-bold tracking-tight">
+              Users
+            </h2>
+            <div className="text-secondary mt-1">Manage system administrators and operators.</div>
+          </div>
+          <div className="col-auto ms-auto d-print-none">
+            <button
+              onClick={() => setShowDialog(true)}
+              className="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center"
+            >
+              <IconPlus size={16} className="me-1" />
+              Create new user
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* List */}
-      {isLoading ? (
-        <div className="flex items-center gap-2 py-10" style={{ color: "#4A7C65" }}>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span style={{ fontSize: 13 }}>Loading…</span>
-        </div>
-      ) : (
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
-        >
-          <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>
-              {users.length} user{users.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-          <div className="px-5 py-4 flex flex-col gap-2">
-            {users.map((u) => (
-              <div
-                key={u.id}
-                className="flex items-center justify-between rounded-xl px-4 py-3 transition"
-                style={{ background: "#F5F0E8", border: "1px solid #C8DDD0" }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = "#0D5C45"}
-                onMouseLeave={e => e.currentTarget.style.borderColor = "#C8DDD0"}
-              >
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>{u.username}</p>
-                  <p style={{ fontSize: 12, color: "#4A7C65", marginTop: 2 }}>{u.email}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className="rounded-full px-3 py-1"
-                    style={{
-                      fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "capitalize",
-                      background: u.role === "admin" ? "#DCFCE7" : "#F5F0E8",
-                      color: u.role === "admin" ? "#166534" : "#4A7C65",
-                      border: u.role === "admin" ? "1px solid #BBF7D0" : "1px solid #C8DDD0",
-                    }}
-                  >
-                    {u.role}
-                  </span>
-                  {u.id !== user?.id && (
-                    <button
-                      onClick={() => setDeleteDialog({ isOpen: true, userId: u.id })}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition"
-                      style={{ fontSize: 12, fontWeight: 500, color: "#991B1B", background: "#FEE2E2", border: "1px solid #FCA5A5", cursor: "pointer" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#FECACA"}
-                      onMouseLeave={e => e.currentTarget.style.background = "#FEE2E2"}
-                    >
-                      <Trash2 size={13} /> Delete
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Dialog */}
-      {showDialog && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ background: "rgba(13,92,69,0.25)", backdropFilter: "blur(2px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowDialog(false); }}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl p-6"
-            style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
-          >
-            {/* Dialog header */}
-            <div className="flex items-center justify-between mb-5">
-              <p style={{ fontSize: 16, fontWeight: 600, color: "#0D5C45" }}>Create new user</p>
-              <button
-                onClick={() => setShowDialog(false)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#4A7C65", display: "flex" }}
-              >
-                <X size={18} />
-              </button>
+      <div className="row row-cards">
+        <div className="col-12">
+          <div className="card card-premium shadow-sm">
+            <div className="card-header">
+              <h3 className="card-title">System Users</h3>
             </div>
+            
+            {isLoading ? (
+              <div className="card-body py-5 text-center text-secondary">
+                <IconLoader2 className="animate-spin mb-2" size={24} />
+                <div className="small">Loading users...</div>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-vcenter table-mobile-md card-table">
+                  <thead>
+                    <tr>
+                      <th className="text-uppercase tracking-widest small fw-bold text-secondary py-3">Username</th>
+                      <th className="text-uppercase tracking-widest small fw-bold text-secondary py-3">Email</th>
+                      <th className="text-uppercase tracking-widest small fw-bold text-secondary py-3">Role</th>
+                      <th className="w-1 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u.id} className="cursor-pointer hover:bg-light transition-colors">
+                        <td className="py-3">
+                          <div className="d-flex align-items-center">
+                            <span className="table-accent-bar" style={{ backgroundColor: '#4f7ef8' }}></span>
+                            <UserAvatar 
+                              email={u.email} 
+                              username={u.username} 
+                              size="sm" 
+                              className="me-3" 
+                            />
+                            <div className="fw-bold">{u.username}</div>
+                          </div>
+                        </td>
+                        <td className="text-secondary">
+                          {u.email}
+                        </td>
+                        <td>
+                          <span className={`badge ${u.role === "admin" ? "bg-purple-lt" : "bg-blue-lt"}`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td>
+                          {u.id !== user?.id && (
+                            <button
+                              onClick={() => setDeleteDialog({ isOpen: true, userId: u.id })}
+                              className="btn btn-ghost-danger btn-icon"
+                              title="Delete user"
+                            >
+                              <IconTrash size={18} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
-            <form onSubmit={handleCreateUser} className="flex flex-col gap-4">
-              {formError && (
-                <div className="rounded-xl px-3 py-2" style={{ background: "#FEE2E2", color: "#991B1B", border: "1px solid #FCA5A5", fontSize: 13 }}>
-                  {formError}
+      {/* Create Modal */}
+      {showDialog && (
+        <div className="modal modal-blur fade show d-block" tabIndex={-1} role="dialog" aria-modal="true" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Create new user</h5>
+                <button type="button" className="btn-close" onClick={() => setShowDialog(false)} aria-label="Close"></button>
+              </div>
+              <form onSubmit={handleCreateUser}>
+                <div className="modal-body">
+                  {formError && (
+                    <div className="alert alert-danger mb-3" role="alert">
+                      {formError}
+                    </div>
+                  )}
+                  <div className="mb-3">
+                    <label className="form-label">Username</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formData.username}
+                      onChange={e => setFormData({ ...formData, username: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Email address</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={formData.email}
+                      onChange={e => setFormData({ ...formData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Password</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      value={formData.password}
+                      onChange={e => setFormData({ ...formData, password: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Role</label>
+                    <select
+                      className="form-select"
+                      value={formData.role}
+                      onChange={e => setFormData({ ...formData, role: e.target.value })}
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
                 </div>
-              )}
-
-              <div>
-                <label style={labelStyle}>Username</label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={e => setFormData({ ...formData, username: e.target.value })}
-                  required
-                  style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = "#00C853"}
-                  onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = "#00C853"}
-                  onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Password</label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={e => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = "#00C853"}
-                  onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Role</label>
-                <select
-                  value={formData.role}
-                  onChange={e => setFormData({ ...formData, role: e.target.value })}
-                  style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = "#00C853"}
-                  onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full rounded-xl py-2.5 transition"
-                style={{ background: "#0D5C45", color: "#F5F0E8", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", marginTop: 4 }}
-                onMouseEnter={e => e.currentTarget.style.background = "#0a4a37"}
-                onMouseLeave={e => e.currentTarget.style.background = "#0D5C45"}
-              >
-                Create
-              </button>
-            </form>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-link link-secondary me-auto" onClick={() => setShowDialog(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Create User
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

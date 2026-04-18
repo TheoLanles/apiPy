@@ -3,9 +3,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
-import { Sidebar } from "@/components/sidebar";
-import { Loader2 } from "lucide-react";
-import SimpleBar from "simplebar-react";
+import { Navbar } from "@/components/Navbar";
+import { IconLoader2 } from "@tabler/icons-react";
 import "simplebar-react/dist/simplebar.min.css";
 
 export default function MainLayout({
@@ -24,23 +23,25 @@ export default function MainLayout({
 
   if (isLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: "#F5F0E8" }}>
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-emerald-800" />
-          <div className="text-emerald-800 text-sm font-medium">Checking session...</div>
-        </div>
-      </div>
+          <div className="text-center py-5">
+            <div className="mb-3">
+              <span className="fs-1 fw-bold tracking-tighter text-primary">apiPY</span>
+            </div>
+            <div className="text-secondary small">Initializing secure session...</div>
+          </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <main className="flex-1" style={{ background: "#F5F0E8" }}>
-        <SimpleBar className="h-full custom-scrollbar-light" autoHide={true}>
-          {children}
-        </SimpleBar>
-      </main>
+    <div className="page">
+      <Navbar />
+      <div className="page-wrapper">
+        <main className="page-body">
+          <div className="container-xl">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

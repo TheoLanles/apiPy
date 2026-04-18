@@ -1,9 +1,7 @@
 "use client";
 
 import React from "react";
-import { Pencil, Save, X } from "lucide-react";
-import SimpleBar from "simplebar-react";
-import "simplebar-react/dist/simplebar.min.css";
+import { IconPencil, IconDeviceFloppy, IconX, IconCode } from "@tabler/icons-react";
 
 interface CodeEditorProps {
   content: string;
@@ -25,49 +23,56 @@ export const CodeEditor = React.memo(({
   onEdit
 }: CodeEditorProps) => {
   return (
-    <div className="rounded-2xl overflow-hidden mb-4" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: "#0D5C45" }}>Script content</p>
+    <div className="card card-premium shadow-sm">
+      <div className="card-header d-flex align-items-center justify-content-between">
+        <h3 className="card-title">
+          <IconCode size={18} className="me-2 text-secondary" />
+          Script Content
+        </h3>
         {isAdmin && (
           editMode ? (
-            <div className="flex gap-2">
-              <button onClick={onSave} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ fontSize: 12, fontWeight: 600, background: "#0D5C45", color: "#F5F0E8", border: "none", cursor: "pointer" }}>
-                <Save size={12} /> Save
+            <div className="btn-list">
+              <button 
+                onClick={onSave} 
+                className="btn btn-success btn-sm"
+              >
+                <IconDeviceFloppy size={14} className="me-1" />
+                Save Changes
               </button>
-              <button onClick={onCancel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ fontSize: 12, fontWeight: 500, background: "transparent", color: "#4A7C65", border: "1px solid #C8DDD0", cursor: "pointer" }}>
-                <X size={12} /> Cancel
+              <button 
+                onClick={onCancel} 
+                className="btn btn-white btn-sm"
+              >
+                <IconX size={14} className="me-1" />
+                Cancel
               </button>
             </div>
           ) : (
-            <button onClick={onEdit} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ fontSize: 12, fontWeight: 500, color: "#0D5C45", background: "#F5F0E8", border: "1px solid #C8DDD0", cursor: "pointer" }}>
-              <Pencil size={12} /> Edit
+            <button 
+              onClick={onEdit} 
+              className="btn btn-white btn-sm"
+            >
+              <IconPencil size={14} className="me-1" />
+              Edit Source
             </button>
           )
         )}
       </div>
-      <div className="p-4">
+      <div className="card-body p-0">
         {editMode ? (
-          <textarea
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            className="custom-scrollbar-light"
-            style={{ width: "100%", boxSizing: "border-box", height: 320, padding: "10px", background: "#F5F0E8", border: "1px solid #C8DDD0", borderRadius: 10, fontFamily: "monospace", fontSize: 12, color: "#0D5C45", outline: "none", resize: "vertical" }}
-            onFocus={e => e.target.style.borderColor = "#00C853"}
-            onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-          />
+          <div className="p-3">
+            <textarea
+              value={content}
+              onChange={e => setContent(e.target.value)}
+              className="form-control font-monospace"
+              style={{ minHeight: '400px', resize: 'vertical' }}
+              placeholder="Enter Python code here..."
+            />
+          </div>
         ) : (
-          <div 
-            className="hide-scrollbar" 
-            style={{ 
-              background: "#0D5C45", 
-              borderRadius: 10, 
-              maxHeight: 320, 
-              overflow: "hidden", 
-              padding: "16px" 
-            }}
-          >
-            <pre style={{ color: "#F5F0E8", fontFamily: "monospace", fontSize: 12, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-              {content || <span style={{ color: "rgba(245,240,232,0.4)" }}>Empty file</span>}
+          <div className="bg-dark text-light p-3 font-monospace overflow-auto" style={{ maxHeight: '500px' }}>
+            <pre className="mb-0 text-white" style={{ fontSize: '13px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              {content || <span className="opacity-50"># This file is empty</span>}
             </pre>
           </div>
         )}

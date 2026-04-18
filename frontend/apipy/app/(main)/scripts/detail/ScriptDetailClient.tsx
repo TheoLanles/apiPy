@@ -4,12 +4,24 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Script, ProcessState, ScriptLog } from "@/types";
-import { Loader2, Play, Square, RotateCw, Package } from "lucide-react";
+import { 
+  IconLoader2, 
+  IconPlayerPlay, 
+  IconPlayerStop, 
+  IconRotateClockwise, 
+  IconPackage,
+  IconClock,
+  IconChevronLeft,
+  IconCode,
+  IconNotes,
+  IconSettings
+} from "@tabler/icons-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useScriptWebSocket } from "@/hooks/use-script-websocket";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { CodeEditor } from "./components/CodeEditor";
 import { LogViewer } from "./components/LogViewer";
+import Link from "next/link";
 
 export default function ScriptDetailClient() {
   const { user } = useAuthStore();
@@ -177,150 +189,158 @@ export default function ScriptDetailClient() {
   };
 
   if (isLoading) return (
-    <div className="flex items-center justify-center py-20" style={{ background: "#F5F0E8" }}>
-      <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#0D5C45" }} />
+    <div className="container-xl py-5 text-center">
+      <IconLoader2 className="animate-spin text-secondary mb-2" size={24} />
+      <div className="text-secondary small">Loading script details...</div>
     </div>
   );
 
   if (!script) return (
-    <div className="flex items-center justify-center py-20" style={{ background: "#F5F0E8" }}>
-      <p style={{ color: "#4A7C65", fontSize: 14 }}>Script not found</p>
+    <div className="container-xl py-5 text-center">
+      <div className="text-secondary mb-3">Script not found</div>
+      <Link href="/scripts" className="btn btn-white">Back to list</Link>
     </div>
   );
 
   const status = state?.status || "unknown";
-  const statusStyle =
-    status === "running" ? { background: "#DCFCE7", color: "#166534", border: "1px solid #BBF7D0" } :
-      status === "error" || status === "crashed" ? { background: "#FEE2E2", color: "#991B1B", border: "1px solid #FCA5A5" } :
-        { background: "#FFEDD5", color: "#9A3412", border: "1px solid #FED7AA" };
-
-  const actionBtn = (onClick: () => void, disabled: boolean, icon: React.ReactNode, label: string, primary = false) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition w-full"
-      style={{
-        background: primary ? "#0D5C45" : "transparent",
-        color: primary ? "#F5F0E8" : "#0D5C45",
-        border: primary ? "none" : "1px solid #C8DDD0",
-        fontSize: 13, fontWeight: 600, cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.45 : 1,
-      }}
-      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = primary ? "#0a4a37" : "#F5F0E8"; }}
-      onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = primary ? "#0D5C45" : "transparent"; }}
-    >
-      {isExecuting ? <Loader2 size={14} className="animate-spin" /> : icon}
-      {label}
-    </button>
-  );
+  const statusColor = 
+    status === "running" ? "success" : 
+    status === "error" || status === "crashed" ? "danger" : 
+    "warning";
 
   return (
-    <div className="px-8 py-10" style={{ background: "#F5F0E8" }}>
-
-      {/* Header */}
-      <div className="flex items-start justify-between mb-7">
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0D5C45", letterSpacing: "-0.01em" }}>{script.name}</h1>
-          <p style={{ fontSize: 12, color: "#4A7C65", fontFamily: "monospace", marginTop: 4 }}>{script.path}</p>
+    <div className="container-xl">
+      <div className="page-header d-print-none mb-4">
+        <div className="row align-items-center">
+          <div className="col">
+            <div className="mb-1">
+              <Link href="/scripts" className="text-secondary d-inline-flex align-items-center">
+                <IconChevronLeft size={16} className="me-1" />
+                Back to scripts
+              </Link>
+            </div>
+            <h2 className="page-title d-flex align-items-center gap-2 fw-bold tracking-tight">
+              {script.name}
+              <span className={`badge bg-${statusColor}-lt ms-2 fw-medium`}>{status}</span>
+            </h2>
+            <div className="text-secondary mt-1 font-monospace small">{script.path}</div>
+          </div>
+          {isAdmin && (
+            <div className="col-auto ms-auto d-print-none">
+              <div className="btn-list">
+                <button
+                  className="btn btn-success d-inline-flex align-items-center"
+                  onClick={handleStart}
+                  disabled={isExecuting || status === "running"}
+                >
+                  {isExecuting ? <IconLoader2 size={16} className="me-2 animate-spin" /> : <IconPlayerPlay size={16} className="me-2" />}
+                  Start
+                </button>
+                <button
+                  className="btn btn-outline-danger d-inline-flex align-items-center"
+                  onClick={() => setIsStopDialogOpen(true)}
+                  disabled={isExecuting || status !== "running"}
+                >
+                  {isExecuting ? <IconLoader2 size={16} className="me-2 animate-spin" /> : <IconPlayerStop size={16} className="me-2" />}
+                  Stop
+                </button>
+                <button
+                  className="btn btn-white d-inline-flex align-items-center"
+                  onClick={handleRestart}
+                  disabled={isExecuting}
+                >
+                  {isExecuting ? <IconLoader2 size={16} className="me-2 animate-spin" /> : <IconRotateClockwise size={16} className="me-2" />}
+                  Restart
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-        <span className="rounded-full px-3 py-1" style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", ...statusStyle }}>
-          {status}
-        </span>
       </div>
 
-      {/* Controls */}
-      {isAdmin && (
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {actionBtn(handleStart, isExecuting || status === "running", <Play size={14} />, "Start", true)}
-          {actionBtn(() => setIsStopDialogOpen(true), isExecuting || status !== "running", <Square size={14} />, "Stop")}
-          {actionBtn(handleRestart, isExecuting, <RotateCw size={14} />, "Restart")}
-        </div>
-      )}
-
-      {/* Info cards */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-          <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-            <div className="flex items-center justify-between">
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#0D5C45" }}>Description</p>
+      <div className="row g-4 mb-4">
+        <div className="col-md-8">
+          <div className="card h-100 card-premium shadow-sm">
+            <div className="card-header d-flex align-items-center justify-content-between">
+              <h3 className="card-title">
+                <IconNotes size={18} className="me-2 text-secondary" />
+                Description
+              </h3>
               {isAdmin && script.has_requirements && (
                 <button
                   onClick={handleReinstall}
                   disabled={isExecuting}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition"
-                  style={{
-                    fontSize: 11, fontWeight: 600,
-                    background: "#F5F0E8", color: "#0D5C45",
-                    border: "1px solid #C8DDD0", cursor: isExecuting ? "not-allowed" : "pointer"
-                  }}
-                  onMouseEnter={e => !isExecuting && (e.currentTarget.style.borderColor = "#0D5C45")}
-                  onMouseLeave={e => !isExecuting && (e.currentTarget.style.borderColor = "#C8DDD0")}
+                  className="btn btn-sm btn-white"
                 >
-                  <Package size={11} /> Reinstall deps
+                  <IconPackage size={14} className="me-1" />
+                  Reinstall dependencies
                 </button>
               )}
             </div>
-          </div>
-          <div className="px-5 py-4">
-            <p style={{ fontSize: 12, color: script.description ? "#0D5C45" : "#4A7C65" }}>
-              {script.description || "No description"}
-            </p>
+            <div className="card-body">
+              <p className={script.description ? 'text-dark' : 'text-secondary italic'}>
+                {script.description || "No description provided for this script."}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-          <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#0D5C45" }}>Options</p>
-          </div>
-          <div className="px-5 py-4 flex flex-col gap-3">
-            {[
-              { id: "start_on_boot", label: "Start on boot", checked: script.start_on_boot },
-              { id: "auto_restart", label: "Auto-restart", checked: script.auto_restart },
-            ].map(({ id, label, checked }) => (
-              <label
-                key={id}
-                className={`flex items-center gap-3 ${isAdmin ? "cursor-pointer group" : "cursor-default opacity-80"}`}
-                onClick={() => isAdmin && handleToggleOption(id as any)}
-              >
-                <div
-                  className="flex items-center justify-center rounded-md transition"
-                  style={{
-                    width: 18, height: 18, flexShrink: 0,
-                    background: checked ? "#0D5C45" : "#F5F0E8",
-                    border: `1.5px solid ${checked ? "#0D5C45" : "#C8DDD0"}`
-                  }}
-                >
-                  {checked && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#F5F0E8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                </div>
-                <span
-                  style={{ fontSize: 13, color: "#0D5C45", fontWeight: checked ? 600 : 400 }}
-                  className={isAdmin ? "group-hover:opacity-70 transition-opacity" : ""}
-                >
-                  {label}
-                </span>
-              </label>
-            ))}
+        <div className="col-md-4">
+          <div className="card h-100 card-premium shadow-sm">
+            <div className="card-header">
+              <h3 className="card-title">
+                <IconSettings size={18} className="me-2 text-secondary" />
+                Options
+              </h3>
+            </div>
+            <div className="card-body">
+              <div className="space-y-3">
+                <label className="form-check form-switch mb-3">
+                  <input 
+                    className="form-check-input" 
+                    type="checkbox" 
+                    checked={script.start_on_boot}
+                    onChange={() => isAdmin && handleToggleOption("start_on_boot")}
+                    disabled={!isAdmin}
+                  />
+                  <span className="form-check-label">Start on boot</span>
+                </label>
+                <label className="form-check form-switch">
+                  <input 
+                    className="form-check-input" 
+                    type="checkbox" 
+                    checked={script.auto_restart}
+                    onChange={() => isAdmin && handleToggleOption("auto_restart")}
+                    disabled={!isAdmin}
+                  />
+                  <span className="form-check-label">Auto-restart on fail</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
+      <div className="mb-4">
+        <CodeEditor
+          content={content}
+          editMode={editMode}
+          isAdmin={isAdmin}
+          setContent={setContent}
+          onSave={handleSaveContent}
+          onCancel={() => setEditMode(false)}
+          onEdit={() => setEditMode(true)}
+        />
+      </div>
 
-      <CodeEditor
-        content={content}
-        editMode={editMode}
-        isAdmin={isAdmin}
-        setContent={setContent}
-        onSave={handleSaveContent}
-        onCancel={() => setEditMode(false)}
-        onEdit={() => setEditMode(true)}
-      />
-
-      <LogViewer
-        logs={logs}
-        isAdmin={isAdmin}
-        isLive={wsConnected}
-        onDownload={handleDownloadLogs}
-        onClear={() => setIsClearLogsDialogOpen(true)}
-      />
+      <div className="mb-4">
+        <LogViewer
+          logs={logs}
+          isAdmin={isAdmin}
+          isLive={wsConnected}
+          onDownload={handleDownloadLogs}
+          onClear={() => setIsClearLogsDialogOpen(true)}
+        />
+      </div>
 
       <ConfirmationDialog
         isOpen={isClearLogsDialogOpen}
@@ -336,10 +356,10 @@ export default function ScriptDetailClient() {
         isOpen={isStopDialogOpen}
         onClose={() => setIsStopDialogOpen(false)}
         onConfirm={handleStop}
-        title="Stop script execution"
+        title="Stop Script Execution"
         description="Are you sure you want to stop this script? Any active processes will be terminated."
         confirmText="Stop Script"
-        variant="warning"
+        variant="danger"
       />
     </div>
   );

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { Loader2 } from "lucide-react";
+import { IconLoader2, IconCheck, IconX } from "@tabler/icons-react";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -49,157 +49,118 @@ export default function SetupPage() {
 
   const passwordMatch = password && confirmPassword ? password === confirmPassword : null;
 
-  const inputStyle = {
-    width: "100%",
-    boxSizing: "border-box" as const,
-    background: "#F5F0E8",
-    border: "1px solid #C8DDD0",
-    borderRadius: 10,
-    padding: "9px 12px",
-    fontSize: 13,
-    color: "#0D5C45",
-    outline: "none",
-    fontFamily: "inherit",
-  };
-
-  const labelStyle = {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 600,
-    color: "#4A7C65",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.06em",
-    marginBottom: 6,
-  };
-
   if (isLoading) return (
-    <div className="flex items-center justify-center min-h-screen" style={{ background: "#F5F0E8" }}>
-      <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#0D5C45" }} />
+    <div className="page page-center">
+      <div className="container container-slim py-4">
+        <div className="text-center py-5">
+          <div className="mb-3">
+            <span className="fs-1 fw-bold tracking-tighter text-primary">
+              <span className="text-accent me-1">api</span>PY
+            </span>
+          </div>
+          <div className="text-secondary small">Initializing setup environment...</div>
+          <div className="progress progress-sm mt-3 mx-auto" style={{ maxWidth: '150px' }}>
+            <div className="progress-bar progress-bar-indeterminate bg-primary"></div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4" style={{ background: "#F5F0E8" }}>
-      <div className="w-full max-w-sm">
-
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: "#0D5C45" }}>apiPy</span>
-          </div>
-          <p style={{ fontSize: 13, color: "#4A7C65", marginTop: 4 }}>Create your admin account</p>
+    <div className="page page-center">
+      <div className="container container-tight py-4">
+        <div className="text-center mb-5">
+          <span className="fs-1 fw-bold tracking-tighter text-primary">
+            <span className="text-accent me-1">api</span>PY
+          </span>
+          <div className="text-secondary mt-1">Initial System Configuration</div>
         </div>
-
-        {/* Card */}
-        <div className="rounded-2xl p-6" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
+        <form className="card card-md card-premium shadow-sm" onSubmit={handleSubmit}>
+          <div className="card-body">
+            <h2 className="h2 text-center mb-4">Create admin account</h2>
+            <p className="text-secondary text-center mb-4">Set up your credentials to get started</p>
+            
             {error && (
-              <div className="rounded-xl px-3 py-2" style={{ background: "#FEE2E2", color: "#991B1B", border: "1px solid #FCA5A5", fontSize: 13 }}>
+              <div className="alert alert-danger mb-3">
                 {error}
               </div>
             )}
 
-            <div>
-              <label style={labelStyle}>Username</label>
+            <div className="mb-3">
+              <label className="form-label">Username</label>
               <input
                 type="text"
-                placeholder="your-username"
+                className="form-control"
+                placeholder="Enter username"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 required
-                style={inputStyle}
-                onFocus={e => e.target.style.borderColor = "#00C853"}
-                onBlur={e => e.target.style.borderColor = "#C8DDD0"}
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>Email</label>
+            <div className="mb-3">
+              <label className="form-label">Email address</label>
               <input
                 type="email"
+                className="form-control"
                 placeholder="you@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                style={inputStyle}
-                onFocus={e => e.target.style.borderColor = "#00C853"}
-                onBlur={e => e.target.style.borderColor = "#C8DDD0"}
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>Password <span style={{ color: "#4A7C65", textTransform: "none", letterSpacing: 0, fontWeight: 400 }}>— min. 6 characters</span></label>
+            <div className="mb-3">
+              <label className="form-label">
+                Password
+                <span className="form-label-description">Min. 6 characters</span>
+              </label>
               <input
                 type="password"
+                className="form-control"
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                style={inputStyle}
-                onFocus={e => e.target.style.borderColor = "#00C853"}
-                onBlur={e => e.target.style.borderColor = "#C8DDD0"}
               />
             </div>
 
-            <div>
-              <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-                <label style={{ ...labelStyle, marginBottom: 0 }}>Confirm password</label>
+            <div className="mb-3">
+              <label className="form-label">
+                Confirm Password
                 {passwordMatch !== null && (
-                  <span style={{ fontSize: 11, fontWeight: 600, color: passwordMatch ? "#166534" : "#991B1B" }}>
-                    {passwordMatch ? "✓ Match" : "✗ No match"}
+                  <span className={`form-label-description text-${passwordMatch ? 'success' : 'danger'}`}>
+                    {passwordMatch ? <IconCheck size={14} className="me-1" /> : <IconX size={14} className="me-1" />}
+                    {passwordMatch ? "Match" : "No match"}
                   </span>
                 )}
-              </div>
+              </label>
               <input
                 type="password"
+                className={`form-control ${passwordMatch === false ? 'is-invalid' : ''}`}
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 required
-                style={{
-                  ...inputStyle,
-                  borderColor: passwordMatch === false ? "#FCA5A5" : "#C8DDD0",
-                }}
-                onFocus={e => e.target.style.borderColor = passwordMatch === false ? "#FCA5A5" : "#00C853"}
-                onBlur={e => e.target.style.borderColor = passwordMatch === false ? "#FCA5A5" : "#C8DDD0"}
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting || passwordMatch === false}
-              className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 transition"
-              style={{
-                background: "#0D5C45",
-                color: "#F5F0E8",
-                fontSize: 13,
-                fontWeight: 600,
-                border: "none",
-                marginTop: 4,
-                cursor: isSubmitting || passwordMatch === false ? "not-allowed" : "pointer",
-                opacity: isSubmitting || passwordMatch === false ? 0.6 : 1,
-              }}
-            >
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isSubmitting ? "Creating account…" : "Create admin account"}
-            </button>
-
-          </form>
+            <div className="form-footer">
+              <button
+                type="submit"
+                className="btn btn-primary w-full"
+                disabled={isSubmitting || passwordMatch === false}
+              >
+                {isSubmitting ? <IconLoader2 size={16} className="me-2 animate-spin" /> : null}
+                {isSubmitting ? "Creating account..." : "Setup Admin Account"}
+              </button>
+            </div>
+          </div>
+        </form>
+        <div className="text-center text-secondary mt-3">
+          Already have an account? <button type="button" onClick={() => router.push("/login")} className="btn btn-link btn-sm p-0 mb-1">Sign in</button>
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-sm mt-5" style={{ color: "#4A7C65" }}>
-          Already have an account?{" "}
-          <button
-            type="button"
-            onClick={() => router.push("/login")}
-            style={{ color: "#0D5C45", fontWeight: 700, textDecoration: "underline", background: "none", border: "none", cursor: "pointer" }}
-          >
-            Sign in
-          </button>
-        </p>
-
       </div>
     </div>
   );

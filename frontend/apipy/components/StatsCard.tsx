@@ -1,43 +1,46 @@
 "use client";
 
 import React from "react";
+import { IconProps } from "@tabler/icons-react";
 
 interface StatsCardProps {
   label: string;
-  value: number;
-  color: string;
+  value: number | string;
+  color?: string; // Optional: used for icon background
+  icon?: React.ElementType<IconProps>;
   className?: string;
+  trend?: {
+    value: string;
+    positive: boolean;
+  };
 }
 
-export const StatsCard = React.memo(({ label, value, color, className }: StatsCardProps) => {
+export const StatsCard = React.memo(({ label, value, color = "primary", icon: Icon, className, trend }: StatsCardProps) => {
   return (
-    <div
-      className={`rounded-2xl p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${className}`}
-      style={{ 
-        background: "#FFFFFF", 
-        border: "1px solid #D6E8DC",
-      }}
-    >
-      <p style={{ 
-        fontSize: 11, 
-        fontWeight: 600, 
-        color: "#4A7C65", 
-        textTransform: "uppercase", 
-        letterSpacing: "0.1em", 
-        marginBottom: 8 
-      }}>
-        {label}
-      </p>
-      <div className="flex items-baseline gap-1">
-        <p style={{ 
-          fontSize: 32, 
-          fontWeight: 800, 
-          color, 
-          lineHeight: 1,
-          letterSpacing: "-0.02em" 
-        }}>
-          {value}
-        </p>
+    <div className={`card card-premium shadow-sm ${className || ""}`}>
+      <div className="card-body p-3">
+        <div className="row align-items-center">
+          {Icon && (
+            <div className="col-auto">
+              <span className={`bg-${color}-lt text-${color} avatar avatar-md rounded-3 shadow-none`}>
+                <Icon size={24} stroke={1.5} />
+              </span>
+            </div>
+          )}
+          <div className="col">
+            <div className="text-muted small fw-bold text-uppercase tracking-wider">
+              {label}
+            </div>
+            <div className="d-flex align-items-baseline gap-2 mt-1">
+              <span className="h1 mb-0 fw-bold tracking-tight text-body">{value}</span>
+              {trend && (
+                <span className={`text-${trend.positive ? 'success' : 'danger'} d-inline-flex align-items-center lh-1 small fw-bold`}>
+                  {trend.value}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

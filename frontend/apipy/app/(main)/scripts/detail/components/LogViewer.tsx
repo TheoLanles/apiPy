@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Download, Trash2 } from "lucide-react";
+import { IconDownload, IconTrash, IconTerminal } from "@tabler/icons-react";
 import SimpleBar from "simplebar-react";
 import "simplebar-react/dist/simplebar.min.css";
 import type { ScriptLog } from "@/types";
@@ -26,47 +26,58 @@ export const LogViewer = React.memo(({
   };
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-        <div className="flex items-center gap-3">
-          <p style={{ fontSize: 13, fontWeight: 600, color: "#0D5C45" }}>Logs</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={onDownload} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition" style={{ fontSize: 12, fontWeight: 500, color: "#0D5C45", background: "#F5F0E8", border: "1px solid #C8DDD0", cursor: "pointer" }}>
-            <Download size={12} /> Download
+    <div className="card card-premium shadow-sm">
+      <div className="card-header d-flex align-items-center justify-content-between">
+        <h3 className="card-title">
+          <IconTerminal size={18} className="me-2 text-secondary" />
+          Logs {isLive && <span className="badge badge-pulse bg-success-lt ms-2">Live</span>}
+        </h3>
+        <div className="btn-list">
+          <button 
+            onClick={onDownload} 
+            className="btn btn-white btn-sm"
+          >
+            <IconDownload size={14} className="me-1" />
+            Download
           </button>
           {isAdmin && (
-            <button onClick={onClear} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition" style={{ fontSize: 12, fontWeight: 500, color: "#991B1B", background: "#FEE2E2", border: "1px solid #FCA5A5", cursor: "pointer" }}>
-              <Trash2 size={12} /> Clear
+            <button 
+              onClick={onClear} 
+              className="btn btn-outline-danger btn-sm"
+            >
+              <IconTrash size={14} className="me-1" />
+              Clear Logs
             </button>
           )}
         </div>
       </div>
 
-      <div style={{ background: "#0D5C45", margin: 16, borderRadius: 10, padding: 0, overflow: "hidden" }}>
-        <SimpleBar
-          className="custom-scrollbar-dark"
-          style={{ maxHeight: 384, padding: "12px 16px" }}
-          autoHide={true}
-        >
-          {logs.length === 0 ? (
-            <p style={{ color: "rgba(245,240,232,0.35)", fontSize: 12, fontFamily: "monospace" }}>No logs</p>
-          ) : (
-            logs.map(log => (
-              <div
-                key={log.id}
-                style={{
-                  color: log.level === "ERROR" ? "#FCA5A5" : log.level === "WARNING" ? "#FCD34D" : "#86EFAC",
-                  lineHeight: 1.7,
-                  fontFamily: "monospace",
-                  fontSize: 12
-                }}
-              >
-                [{log.level}] {stripAnsi(log.line)}
-              </div>
-            ))
-          )}
-        </SimpleBar>
+      <div className="card-body p-0">
+        <div className="bg-dark p-0">
+          <SimpleBar
+            className="p-3"
+            style={{ maxHeight: '500px' }}
+            autoHide={true}
+          >
+            {logs.length === 0 ? (
+              <div className="text-secondary font-monospace small"># No log entries found</div>
+            ) : (
+              logs.map(log => (
+                <div
+                  key={log.id}
+                  className="font-monospace small mb-1"
+                  style={{
+                    color: log.level === "ERROR" ? "#FCA5A5" : log.level === "WARNING" ? "#FCD34D" : "#86EFAC",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <span className="opacity-50 me-2">[{log.level}]</span>
+                  {stripAnsi(log.line)}
+                </div>
+              ))
+            )}
+          </SimpleBar>
+        </div>
       </div>
     </div>
   );

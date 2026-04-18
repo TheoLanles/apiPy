@@ -1,70 +1,236 @@
+@import "@tabler/core/dist/css/tabler.min.css";
 @import "tailwindcss";
-@config "../tailwind.config.ts";
 
+.text-accent {
+  color: #4f7ef8 !important;
+}
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.6%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.6%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.6%;
-  --primary: 161 95% 21%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 40 100% 96%;
-  --secondary-foreground: 161 95% 21%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --accent: 161 95% 21%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
-  --ring: 161 95% 21%;
+  /* ── Palette bleu nuit & indigo ── */
+  --tblr-primary: #1e3a6e;
+  --tblr-primary-rgb: 30, 58, 110;
+  --tblr-primary-fg: #ffffff;
+
+  --tblr-bg-body: #f0f2f8;
+  --tblr-bg-surface: #ffffff;
+  --tblr-bg-surface-2: #f7f8fc;
+
+  --tblr-border-color: #d8dff0;
+  --tblr-border-color-translucent: rgba(30, 58, 110, 0.1);
+
+  --tblr-body-color: #0e1a2e;
+  --tblr-secondary-color: #4a5878;
+  --tblr-muted-color: #8a96b4;
+
+  /* Accent vif pour les highlights */
+  --tblr-accent: #4f7ef8;
+
+  --tblr-font-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --tblr-box-shadow: 0 1px 3px rgba(30, 58, 110, 0.06), 0 1px 2px rgba(30, 58, 110, 0.04);
+  --tblr-box-shadow-medium: 0 4px 12px rgba(30, 58, 110, 0.1), 0 2px 4px rgba(30, 58, 110, 0.06);
 }
 
-.dark {
-  --background: 0 0% 3.6%;
-  --foreground: 0 0% 98%;
-  --card: 0 0% 10%;
-  --card-foreground: 0 0% 98%;
-  --popover: 0 0% 10%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 161 95% 21%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 40 100% 96%;
-  --secondary-foreground: 161 95% 21%;
-  --muted: 0 0% 14.9%;
-  --muted-foreground: 0 0% 63.9%;
-  --accent: 161 95% 21%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 14.9%;
-  --input: 0 0% 14.9%;
-  --ring: 161 95% 21%;
+[data-bs-theme='dark'] {
+  --tblr-primary: #7ba4f8;
+  --tblr-primary-rgb: 123, 164, 248;
+  --tblr-primary-fg: #0a0e1a;
+
+  --tblr-bg-body: #0a0e1a;
+  --tblr-bg-surface: #111827;
+  --tblr-bg-surface-2: #161d30;
+  --tblr-card-bg: #111827;
+
+  --tblr-border-color: #1e2a45;
+  --tblr-border-color-translucent: rgba(123, 164, 248, 0.1);
+
+  --tblr-body-color: #e8ecf8;
+  --tblr-secondary-color: #8a9ac8;
+  --tblr-muted-color: #4a5878;
 }
 
-html,
-body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
+/* ── Navbar ── */
+.glass-navbar {
+  background: rgba(255, 255, 255, 0.90) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid #d0d8ee !important;
 }
 
-body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Arial", sans-serif;
+[data-bs-theme='dark'] .glass-navbar {
+  background: rgba(10, 14, 26, 0.92) !important;
+  border-bottom-color: #1e2a45 !important;
 }
 
-/* --- Global Custom Scrollbar --- */
+.btn-theme-toggle {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: none !important;
+  color: var(--tblr-muted-color) !important;
+}
+
+.btn-theme-toggle:hover {
+  background-color: rgba(79, 126, 248, 0.08) !important;
+  color: var(--tblr-accent) !important;
+  transform: scale(1.05) translateY(-1px);
+}
+
+.btn-theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* ── Cards ── */
+.card-premium {
+  border-radius: 12px !important;
+  border: 1px solid var(--tblr-border-color) !important;
+  background-color: var(--tblr-bg-surface) !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-premium:hover {
+  border-color: var(--tblr-accent, #4f7ef8) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--tblr-box-shadow-medium) !important;
+}
+
+.card-static {
+  transition: none !important;
+}
+
+.card-static:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: var(--tblr-border-color) !important;
+}
+
+/* ── Inputs ── */
+.form-control {
+  background-color: rgba(79, 126, 248, 0.04) !important;
+  border: 1px solid var(--tblr-border-color) !important;
+  border-radius: 8px !important;
+  color: var(--tblr-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+.form-control::placeholder {
+  color: var(--tblr-muted-color) !important;
+}
+
+.form-control:focus {
+  background-color: var(--tblr-bg-surface) !important;
+  border-color: #4f7ef8 !important;
+  box-shadow: 0 0 0 3px rgba(79, 126, 248, 0.10) !important;
+}
+
+[data-bs-theme='dark'] .form-control {
+  background-color: rgba(79, 126, 248, 0.05) !important;
+  border-color: #1e2a45 !important;
+  color: #e8ecf8 !important;
+}
+
+[data-bs-theme='dark'] .form-control:focus {
+  background-color: #161d30 !important;
+  border-color: #4f7ef8 !important;
+}
+
+/* ── Table accent bar ── */
+.table-accent-bar {
+  display: inline-block;
+  width: 3px;
+  height: 1.2rem;
+  background-color: #4f7ef8;
+  border-radius: 10px;
+  margin-right: 0.65rem;
+  vertical-align: middle;
+}
+
+/* ── Dropzone Premium ── */
+.dropzone-premium {
+  background-color: rgba(79, 126, 248, 0.04) !important;
+  border: 1px solid var(--tblr-border-color) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: var(--tblr-body-color);
+  box-shadow: inset 0 2px 4px rgba(30, 58, 110, 0.02);
+}
+
+.dropzone-premium:hover {
+  background-color: rgba(79, 126, 248, 0.08) !important;
+  border-color: var(--tblr-accent) !important;
+  box-shadow: inset 0 2px 8px rgba(79, 126, 248, 0.05);
+}
+
+.dropzone-premium.active {
+  background-color: rgba(47, 179, 68, 0.06) !important;
+  border-color: #2fb344 !important;
+  border-width: 2px !important;
+}
+
+.dropzone-premium .icon-upload {
+  color: var(--tblr-muted-color);
+  transition: color 0.2s ease;
+}
+
+.dropzone-premium:hover .icon-upload {
+  color: var(--tblr-accent);
+}
+
+.dropzone-premium.active .icon-upload {
+  color: #2fb344;
+}
+
+/* ── Status badges ── */
+.badge-active {
+  background: #ddeaf8;
+  color: #1a4080;
+}
+
+.badge-pending {
+  background: #f0ebff;
+  color: #4a28a0;
+}
+
+.badge-paused {
+  background: #f4f0ff;
+  color: #6b4dcc;
+}
+
+[data-bs-theme='dark'] .badge-active {
+  background: #152240;
+  color: #7ba4f8;
+}
+
+[data-bs-theme='dark'] .badge-pending {
+  background: #1e1540;
+  color: #a08af8;
+}
+
+[data-bs-theme='dark'] .badge-paused {
+  background: #1a1535;
+  color: #8870e8;
+}
+
+/* ── Tables ── */
+.card-table thead th {
+  background: transparent !important;
+  border-bottom: 1px solid var(--tblr-border-color);
+  color: var(--tblr-muted-color);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 400;
+}
+
+.card-table tbody tr:hover td {
+  background: rgba(79, 126, 248, 0.04) !important;
+}
+
+[data-bs-theme='dark'] .card-table tbody tr:hover td {
+  background: rgba(79, 126, 248, 0.06) !important;
+}
+
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -72,156 +238,22 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(13, 92, 69, 0.2); /* Turboself Green */
+  background: rgba(30, 58, 110, 0.12);
   border-radius: 10px;
-  border: 3px solid transparent;
-  background-clip: content-box;
-  transition: background 0.2s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(13, 92, 69, 0.4);
+[data-bs-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(123, 164, 248, 0.12);
 }
 
-/* Dark Mode Scrollbar */
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(245, 240, 232, 0.15); /* Soft Sand for dark mode */
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 240, 232, 0.3);
-}
-
-/* Firefox Support */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(13, 92, 69, 0.2) transparent;
-}
-
-.dark * {
-  scrollbar-color: rgba(245, 240, 232, 0.15) transparent;
-}
-
-/* --- Custom Scrollbar - Dark Theme (SimpleBar) --- */
-.custom-scrollbar-dark .simplebar-scrollbar::before {
-  background: rgba(245, 240, 232, 0.25) !important; /* Soft sand white */
-  border-radius: 4px;
-  right: 2px;
-  left: 2px;
-}
-
-.custom-scrollbar-dark .simplebar-scrollbar.simplebar-visible::before {
-  opacity: 1;
-}
-
-.custom-scrollbar-dark .simplebar-track.simplebar-vertical {
-  background: rgba(0, 0, 0, 0.15) !important;
-  width: 9px;
-  border-radius: 10px;
-  margin-right: 4px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-
-.custom-scrollbar-dark .simplebar-track.simplebar-horizontal {
-  background: rgba(0, 0, 0, 0.15) !important;
-  height: 9px;
-  border-radius: 10px;
-  margin-bottom: 4px;
-}
-
-.custom-scrollbar-dark .simplebar-scrollbar.horizontal::before {
-  top: 2px;
-  bottom: 2px;
-}
-
-/* Smooth transition for the thumb */
-.custom-scrollbar-dark .simplebar-scrollbar::before {
-  transition: background 0.2s ease, opacity 0.2s ease;
-}
-
-.custom-scrollbar-dark:hover .simplebar-scrollbar::before {
-  background: rgba(245, 240, 232, 0.45) !important;
-}
-
-/* --- Custom Scrollbar - Light Theme (SimpleBar) --- */
-.custom-scrollbar-light .simplebar-scrollbar::before {
-  background: rgba(13, 92, 69, 0.15) !important; /* Soft dark green */
-  border-radius: 4px;
-}
-
-.custom-scrollbar-light .simplebar-scrollbar.simplebar-visible::before {
-  opacity: 1;
-}
-
-.custom-scrollbar-light .simplebar-track.simplebar-vertical {
-  background: rgba(0, 0, 0, 0.05) !important;
-  width: 9px;
-  border-radius: 10px;
-  margin-right: 4px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-
-.custom-scrollbar-light:hover .simplebar-scrollbar::before {
-  background: rgba(13, 92, 69, 0.3) !important;
-}
-
-/* --- Native Scrollbar Overrides (for Textareas) --- */
-.custom-scrollbar-light {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(13, 92, 69, 0.15) rgba(0, 0, 0, 0.05) !important;
-}
-
-.custom-scrollbar-light::-webkit-scrollbar {
-  width: 8px !important;
-  height: 8px !important;
-}
-.custom-scrollbar-light::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05) !important;
-  border-radius: 10px !important;
-}
-.custom-scrollbar-light::-webkit-scrollbar-thumb {
-  background: rgba(13, 92, 69, 0.15) !important;
-  border-radius: 10px !important;
-  border: 2px solid transparent !important;
-  background-clip: content-box !important;
-}
-.custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
-  background: rgba(13, 92, 69, 0.3) !important;
-  background-clip: content-box !important;
-}
-
-.custom-scrollbar-dark {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(245, 240, 232, 0.2) rgba(0, 0, 0, 0.15) !important;
-}
-
-.custom-scrollbar-dark::-webkit-scrollbar {
-  width: 8px !important;
-  height: 8px !important;
-}
-.custom-scrollbar-dark::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.15) !important;
-  border-radius: 10px !important;
-}
-.custom-scrollbar-dark::-webkit-scrollbar-thumb {
-  background: rgba(245, 240, 232, 0.2) !important;
-  border-radius: 10px !important;
-  border: 2px solid transparent !important;
-  background-clip: content-box !important;
-}
-.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 240, 232, 0.4) !important;
-  background-clip: content-box !important;
-}
-
-/* Hide scrollbar utility */
-.hide-scrollbar {
-  -ms-overflow-style: none !important;  /* IE and Edge */
-  scrollbar-width: none !important;  /* Firefox */
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none !important; /* Chrome, Safari and Opera */
+/* ── Base ── */
+html,
+body {
+  height: 100%;
+  background-color: var(--tblr-bg-body);
+  color: var(--tblr-body-color);
+  font-family: var(--tblr-font-sans-serif);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.011em;
+  transition: background-color 0.3s, color 0.3s;
 }

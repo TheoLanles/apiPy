@@ -3,7 +3,22 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { Loader2, Save, RefreshCw, AlertTriangle, Settings as SettingsIcon, Bell, Shield, Terminal, Activity } from "lucide-react";
+import { 
+  IconLoader2, 
+  IconDeviceFloppy, 
+  IconRefresh, 
+  IconAlertTriangle, 
+  IconSettings, 
+  IconBell, 
+  IconShield, 
+  IconTerminal, 
+  IconActivity,
+  IconCheck,
+  IconX,
+  IconCircleCheck,
+  IconInfoCircle
+} from "@tabler/icons-react";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
@@ -19,7 +34,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
   const [activeTab, setActiveTab] = useState("system");
 
   useEffect(() => {
@@ -62,8 +77,8 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!isAdmin) return;
     setIsSaving(true);
     setMessage(null);
@@ -86,400 +101,241 @@ export default function SettingsPage() {
   };
 
   if (isLoading) return (
-    <div className="flex items-center justify-center py-20" style={{ background: "#F5F0E8" }}>
-      <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#0D5C45" }} />
+    <div className="container-xl py-5 text-center">
+      <IconLoader2 className="animate-spin text-secondary mb-2" size={24} />
+      <div className="text-secondary small">Loading settings...</div>
     </div>
   );
 
-  const inputStyle = {
-    width: "100%",
-    boxSizing: "border-box" as const,
-    background: "#F5F0E8",
-    border: "1px solid #C8DDD0",
-    borderRadius: 10,
-    padding: "9px 12px",
-    fontSize: 13,
-    color: "#0D5C45",
-    outline: "none",
-  };
-
-  const labelStyle = {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 600,
-    color: "#4A7C65",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.06em",
-    marginBottom: 6,
-  };
-
   const allTabs = [
-    { id: "system", label: "System", icon: Activity, adminOnly: false },
-    { id: "notifications", label: "Notifications", icon: Bell, adminOnly: true },
-    { id: "auth", label: "Authentication", icon: Shield, adminOnly: true },
-    { id: "tools", label: "Tools", icon: Terminal, adminOnly: true },
+    { id: "system", label: "System", icon: IconActivity, adminOnly: false },
+    { id: "notifications", label: "Notifications", icon: IconBell, adminOnly: true },
+    { id: "auth", label: "Authentication", icon: IconShield, adminOnly: true },
+    { id: "tools", label: "Tools", icon: IconTerminal, adminOnly: true },
   ] as const;
 
   const tabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
 
   return (
-    <div className="px-6 py-10 min-h-screen" style={{ background: "#F5F0E8" }}>
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: "#0D5C45", letterSpacing: "-0.02em" }}>
+    <div className="container-xl">
+      <div className="page-header d-print-none mb-4">
+        <div className="row align-items-center">
+          <div className="col">
+            <h2 className="page-title fw-bold tracking-tight">
               Settings
-            </h1>
-            <p style={{ fontSize: 13, color: "#4A7C65", marginTop: 2 }}>
-              Manage your application preferences and system configuration.
-            </p>
+            </h2>
+            <div className="text-secondary mt-1">Manage your application preferences and system configuration.</div>
+          </div>
+        </div>
+      </div>
+
+      {message && (
+        <div className={`alert alert-${message.type === 'error' ? 'danger' : message.type} alert-dismissible`} role="alert">
+          <div className="d-flex">
+            <div>
+              {message.type === 'success' ? <IconCircleCheck className="me-2" /> : message.type === 'info' ? <IconInfoCircle className="me-2" /> : <IconAlertTriangle className="me-2" />}
+            </div>
+            <div>{message.text}</div>
+          </div>
+          <button type="button" className="btn-close" onClick={() => setMessage(null)} aria-label="Close"></button>
+        </div>
+      )}
+
+      <div className="row g-4">
+        <div className="col-12 col-md-3">
+          <div className="list-group list-group-transparent">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`list-group-item list-group-item-action d-flex align-items-center mb-1 rounded-2 ${activeTab === tab.id ? 'active fw-bold bg-primary-lt text-primary border-primary' : 'border-0'}`}
+              >
+                <tab.icon size={18} className="me-3" />
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {message && (
-          <div 
-            className="mb-6 animate-in fade-in slide-in-from-top-2 duration-300"
-            style={{
-              fontSize: 14,
-              padding: "12px 16px",
-              borderRadius: 16,
-              background: message.type === "success" ? "#DCFCE7" : "#FEE2E2",
-              color: message.type === "success" ? "#166534" : "#991B1B",
-              border: "1px solid",
-              borderColor: message.type === "success" ? "#BBF7D0" : "#FCA5A5",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
-            }}
-          >
-            {message.type === "success" ? (
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            ) : (
-              <AlertTriangle size={16} />
-            )}
-            <span style={{ fontWeight: 500 }}>{message.text}</span>
-            <button 
-              onClick={() => setMessage(null)}
-              className="ml-auto opacity-50 hover:opacity-100 transition-opacity"
-              style={{ fontSize: 18, lineHeight: 1 }}
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar Navigation */}
-          <div className="w-full md:w-64 shrink-0">
-            <div className="flex flex-col gap-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
-                  style={{
-                    background: activeTab === tab.id ? "#FFFFFF" : "transparent",
-                    color: activeTab === tab.id ? "#0D5C45" : "#4A7C65",
-                    fontWeight: activeTab === tab.id ? 700 : 500,
-                    border: activeTab === tab.id ? "1px solid #D6E8DC" : "1px solid transparent",
-                    boxShadow: activeTab === tab.id ? "0 4px 12px rgba(13, 92, 69, 0.05)" : "none",
-                  }}
-                >
-                  <tab.icon size={18} />
-                  <span style={{ fontSize: 14 }}>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tab Content */}
-          <div className="flex-1 min-w-0">
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              {activeTab === "system" && (
-                <div className="flex flex-col gap-6">
-                  {/* System Info Card */}
-                  <div className="rounded-3xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-                    <div className="px-6 py-5" style={{ borderBottom: "1px solid #F0F7F2" }}>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: "#0D5C45" }}>System Information</p>
-                    </div>
-                    <div className="p-6 flex flex-col gap-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label style={labelStyle}>API Server URL</label>
-                          <code style={{ 
-                            fontSize: 12, 
-                            color: "#0D5C45", 
-                            background: "#F5F0E8", 
-                            padding: "8px 12px", 
-                            borderRadius: 12, 
-                            display: "block", 
-                            fontFamily: "monospace", 
-                            border: "1px solid #C8DDD0" 
-                          }}>
-                            {api.getBaseUrl()}
-                          </code>
-                        </div>
-                        <div>
-                          <label style={labelStyle}>App Version</label>
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-                            <span style={{ fontSize: 20, color: "#0D5C45", fontWeight: 800 }}>
-                              {version || "..."}
-                            </span>
-                            <span style={{ fontSize: 12, color: "#4A7C65", fontWeight: 500 }}>stable</span>
-                          </div>
+        <div className="col-12 col-md-9">
+          <div className="tab-content">
+            {activeTab === "system" && (
+              <div className="space-y-3">
+                <div className="card card-premium shadow-sm">
+                  <div className="card-header">
+                    <h3 className="card-title">System Information</h3>
+                  </div>
+                  <div className="card-body">
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <label className="form-label text-uppercase tracking-wider fs-6 fw-bold text-secondary">API Server URL</label>
+                        <input type="text" className="form-control" value={api.getBaseUrl()} readOnly />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label text-uppercase tracking-wider fs-6 fw-bold text-secondary">App Version</label>
+                        <div className="d-flex align-items-baseline gap-2">
+                          <span className="h1 mb-0">{version || "..." }</span>
+                          <span className="badge bg-green-lt">stable</span>
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* CORS Domain Card */}
-                  {isAdmin && (
-                    <div className="rounded-3xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-                      <div className="px-6 py-5" style={{ borderBottom: "1px solid #F0F7F2" }}>
-                        <p style={{ fontSize: 15, fontWeight: 700, color: "#0D5C45" }}>CORS / Reverse Proxy</p>
-                      </div>
-                      <div className="p-6">
-                        <form onSubmit={handleSave} className="flex flex-col gap-5">
-                          <div>
-                            <label style={labelStyle}>Allowed Origin Domain</label>
-                            <div className="flex flex-col sm:flex-row gap-3">
-                              <input
-                                type="text"
-                                placeholder="https://pyrunner.example.com"
-                                value={corsDomain}
-                                onChange={e => setCorsDomain(e.target.value)}
-                                disabled={!isAdmin || isSaving}
-                                style={{ ...inputStyle, flex: 1, fontFamily: "monospace" }}
-                                onFocus={e => e.target.style.borderColor = "#00C853"}
-                                onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-                              />
-                              <button
-                                type="submit"
-                                disabled={isSaving}
-                                className="flex items-center gap-2 px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-900/10 transition-all hover:translate-y-[-1px]"
-                                style={{
-                                  background: "#0D5C45",
-                                  color: "#FFFFFF",
-                                  fontSize: 13,
-                                  fontWeight: 700,
-                                  border: "none",
-                                }}
-                              >
-                                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                Save
-                              </button>
-                            </div>
-                            <p style={{ fontSize: 12, color: "#4A7C65", marginTop: 10 }}>
-                              If you access PyRunner through a reverse proxy (Nginx, Traefik, Caddy...),
-                              enter your public URL here including the protocol.
-                            </p>
-                            <p style={{ fontSize: 11, color: "#4A7C65", marginTop: 6, padding: 12, background: "#FDFCF6", borderRadius: 8, border: "1px solid #FAF7E6" }}>
-                              <strong>Examples:</strong> <code>https://pyrunner.myserver.com</code> · <code>https://scripts.example.org</code><br />
-                              <strong>Note:</strong> <code>localhost</code> is always allowed. Changes apply instantly without restart.
-                            </p>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Update Card */}
-                  {isAdmin && <UpdateCard labelStyle={labelStyle} />}
                 </div>
-              )}
 
-              {activeTab === "notifications" && (
-                <div className="flex flex-col gap-6">
-                  <div className="rounded-3xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-                    <div className="px-6 py-5" style={{ borderBottom: "1px solid #F0F7F2" }}>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: "#0D5C45" }}>Discord Notifications</p>
+                {isAdmin && (
+                  <div className="card card-premium shadow-sm mt-3">
+                    <div className="card-header">
+                      <h3 className="card-title">CORS / Reverse Proxy</h3>
                     </div>
-                    <div className="p-6">
-                      <form onSubmit={handleSave} className="flex flex-col gap-6">
-                        <div>
-                          <label style={labelStyle}>Discord Webhook URL</label>
-                          <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="card-body">
+                      <form onSubmit={handleSave}>
+                        <div className="mb-3">
+                          <label className="form-label text-uppercase tracking-wider fs-6 fw-bold text-secondary">Allowed Origin Domain</label>
+                          <div className="input-group">
                             <input
                               type="text"
-                              placeholder="https://discord.com/api/webhooks/..."
-                              value={webhookUrl}
-                              onChange={e => setWebhookUrl(e.target.value)}
-                              disabled={!isAdmin || isSaving}
-                              style={{ ...inputStyle, flex: 1 }}
-                              onFocus={e => e.target.style.borderColor = "#00C853"}
-                              onBlur={e => e.target.style.borderColor = "#C8DDD0"}
+                              className="form-control font-monospace"
+                              placeholder="https://pyrunner.example.com"
+                              value={corsDomain}
+                              onChange={e => setCorsDomain(e.target.value)}
+                              disabled={isSaving}
                             />
-                            {isAdmin && (
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={handleTestWebhook}
-                                  disabled={isTesting || !webhookUrl}
-                                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all"
-                                  style={{
-                                    background: "#F5F0E8",
-                                    color: "#0D5C45",
-                                    fontSize: 13,
-                                    fontWeight: 700,
-                                    border: "1px solid #C8DDD0",
-                                  }}
-                                >
-                                  {isTesting ? <Loader2 size={14} className="animate-spin" /> : null}
-                                  Test
-                                </button>
-                                <button
-                                  type="submit"
-                                  disabled={isSaving}
-                                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-900/10 transition-all hover:translate-y-[-1px]"
-                                  style={{
-                                    background: "#0D5C45",
-                                    color: "#FFFFFF",
-                                    fontSize: 13,
-                                    fontWeight: 700,
-                                    border: "none",
-                                  }}
-                                >
-                                  {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                  Save Change
-                                </button>
-                              </div>
-                            )}
+                            <button className="btn btn-primary" type="submit" disabled={isSaving}>
+                              {isSaving ? <IconLoader2 size={16} className="animate-spin" /> : <IconDeviceFloppy size={16} />}
+                              <span className="ms-2">Save</span>
+                            </button>
                           </div>
-                          <p style={{ fontSize: 12, color: "#4A7C65", marginTop: 10 }}>
-                            Notifications are sent when a script enters an error state or crashes.
-                          </p>
+                          <div className="form-hint mt-2">
+                            If you access PyRunner through a reverse proxy, enter your public URL here.
+                          </div>
                         </div>
                       </form>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {activeTab === "auth" && (
-                <div className="flex flex-col gap-6">
-                  <div className="rounded-3xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-                    <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: "1px solid #F0F7F2" }}>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: "#0D5C45" }}>OpenID Connect (OIDC)</p>
+                {isAdmin && <UpdateCard />}
+              </div>
+            )}
+
+            {activeTab === "notifications" && (
+              <div className="card card-premium shadow-sm">
+                <div className="card-header">
+                  <h3 className="card-title">Discord Notifications</h3>
+                </div>
+                <div className="card-body">
+                  <form onSubmit={handleSave}>
+                    <div className="mb-3">
+                      <label className="form-label text-uppercase tracking-wider fs-6 fw-bold text-secondary">Discord Webhook URL</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="https://discord.com/api/webhooks/..."
+                        value={webhookUrl}
+                        onChange={e => setWebhookUrl(e.target.value)}
+                        disabled={isSaving}
+                      />
+                    </div>
+                    <div className="d-flex gap-2">
                       <button
                         type="button"
-                        onClick={() => setOidcEnabled(!oidcEnabled)}
-                        disabled={!isAdmin || isSaving}
-                        style={{
-                          width: 48,
-                          height: 26,
-                          borderRadius: 13,
-                          background: oidcEnabled ? "#0D5C45" : "#E2E8F0",
-                          position: "relative",
-                          transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-                          cursor: isAdmin ? "pointer" : "default"
-                        }}
+                        onClick={handleTestWebhook}
+                        disabled={isTesting || !webhookUrl}
+                        className="btn btn-white"
                       >
-                        <div style={{
-                          position: "absolute",
-                          top: 3,
-                          left: oidcEnabled ? 25 : 3,
-                          width: 20,
-                          height: 20,
-                          borderRadius: 10,
-                          background: "#FFFFFF",
-                          transition: "left 0.3s",
-                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                        }} />
+                        {isTesting && <IconLoader2 size={16} className="me-2 animate-spin" />}
+                        Test Notification
+                      </button>
+                      <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                        {isSaving ? <IconLoader2 size={16} className="animate-spin" /> : <IconDeviceFloppy size={16} />}
+                        <span className="ms-2">Save Settings</span>
                       </button>
                     </div>
-                    <div className="p-6">
-                      <div className="flex flex-col gap-6">
-                        {!oidcEnabled && (
-                          <div className="py-4 text-center">
-                            <p style={{ color: "#4A7C65", fontSize: 13 }}>
-                              OIDC authentication is currently disabled. Toggle to configure.
-                            </p>
-                          </div>
-                        )}
-                        {oidcEnabled && (
-                          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-top-4 duration-500">
-                            <div>
-                              <label style={labelStyle}>Issuer URL</label>
-                              <input
-                                type="text"
-                                placeholder="https://accounts.google.com"
-                                value={oidcIssuer}
-                                onChange={e => setOidcIssuer(e.target.value)}
-                                disabled={!isAdmin || isSaving}
-                                style={inputStyle}
-                              />
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div>
-                                <label style={labelStyle}>Client ID</label>
-                                <input
-                                  type="text"
-                                  placeholder="your-client-id"
-                                  value={oidcClientID}
-                                  onChange={e => setOidcClientID(e.target.value)}
-                                  disabled={!isAdmin || isSaving}
-                                  style={inputStyle}
-                                />
-                              </div>
-                              <div>
-                                <label style={labelStyle}>Client Secret</label>
-                                <input
-                                  type="password"
-                                  placeholder="••••••••••••"
-                                  value={oidcClientSecret}
-                                  onChange={e => setOidcClientSecret(e.target.value)}
-                                  disabled={!isAdmin || isSaving}
-                                  style={inputStyle}
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <label style={labelStyle}>Redirect URL</label>
-                              <input
-                                type="text"
-                                placeholder="https://apipy.example.com/api/auth/oidc/callback"
-                                value={oidcRedirectURL}
-                                onChange={e => setOidcRedirectURL(e.target.value)}
-                                disabled={!isAdmin || isSaving}
-                                style={inputStyle}
-                              />
-                              <p style={{ fontSize: 11, color: "#4A7C65", marginTop: 10, padding: 12, background: "#FDFCF6", borderRadius: 8, border: "1px solid #FAF7E6" }}>
-                                <strong>Tip:</strong> Ensure your OIDC provider allows redirects to this URL.
-                              </p>
-                            </div>
-                            <div className="flex justify-end pt-2">
-                              <button
-                                onClick={handleSave}
-                                disabled={isSaving || !isAdmin}
-                                className="flex items-center gap-2 px-8 py-2.5 rounded-xl shadow-lg shadow-emerald-900/10 transition-all hover:translate-y-[-1px]"
-                                style={{
-                                  background: "#0D5C45",
-                                  color: "#FFFFFF",
-                                  fontSize: 13,
-                                  fontWeight: 700,
-                                  border: "none",
-                                }}
-                              >
-                                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                Save Auth Config
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    <div className="form-hint mt-2">
+                      Notifications are sent when a script enters an error state or crashes.
                     </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "auth" && (
+              <div className="card card-premium shadow-sm">
+                <div className="card-header">
+                  <h3 className="card-title">OpenID Connect (OIDC)</h3>
+                  <div className="card-actions">
+                    <label className="form-check form-switch mb-0">
+                      <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        checked={oidcEnabled}
+                        onChange={(e) => setOidcEnabled(e.target.checked)}
+                        disabled={isSaving}
+                      />
+                    </label>
                   </div>
                 </div>
-              )}
-
-              {activeTab === "tools" && (
-                <div className="flex flex-col gap-6">
-                  {isAdmin && <DebugCard inputStyle={inputStyle} labelStyle={labelStyle} />}
+                <div className="card-body">
+                  {!oidcEnabled ? (
+                    <div className="text-secondary text-center py-4">
+                      OIDC authentication is currently disabled.
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSave} className="space-y-3">
+                      <div className="mb-3">
+                        <label className="form-label text-uppercase tracking-wider fs-6 fw-bold text-secondary">Issuer URL</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="https://accounts.google.com"
+                          value={oidcIssuer}
+                          onChange={e => setOidcIssuer(e.target.value)}
+                        />
+                      </div>
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label text-uppercase tracking-wider fs-6 fw-bold text-secondary">Client ID</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={oidcClientID}
+                            onChange={e => setOidcClientID(e.target.value)}
+                          />
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label text-uppercase tracking-wider fs-6 fw-bold text-secondary">Client Secret</label>
+                          <input
+                            type="password"
+                            className="form-control"
+                            value={oidcClientSecret}
+                            onChange={e => setOidcClientSecret(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label text-uppercase tracking-wider fs-6 fw-bold text-secondary">Redirect URL</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={oidcRedirectURL}
+                          onChange={e => setOidcRedirectURL(e.target.value)}
+                        />
+                      </div>
+                      <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                        {isSaving ? <IconLoader2 size={16} className="animate-spin" /> : <IconDeviceFloppy size={16} />}
+                        <span className="ms-2">Save Auth Configuration</span>
+                      </button>
+                    </form>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {activeTab === "tools" && (
+              <div className="space-y-3">
+                <DebugCard />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -487,84 +343,13 @@ export default function SettingsPage() {
   );
 }
 
-function ConfirmDialog({ isOpen, onClose, onConfirm, title, message }: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onConfirm: () => void; 
-  title: string; 
-  message: string; 
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm" 
-        onClick={onClose}
-      />
-      
-      {/* Dialog Card */}
-      <div 
-        className="relative w-full max-w-md rounded-3xl p-6 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200" 
-        style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}
-      >
-        <div className="flex gap-4 mb-4">
-          <div className="shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "#FEE2E2" }}>
-            <AlertTriangle size={24} style={{ color: "#DC2626" }} />
-          </div>
-          <div>
-            <p className="mb-1" style={{ fontSize: 18, fontWeight: 700, color: "#0D5C45" }}>{title}</p>
-            <p style={{ fontSize: 14, color: "#4A7C65", lineHeight: 1.5 }}>{message}</p>
-          </div>
-        </div>
-
-        <div className="flex gap-3 justify-end mt-7">
-          <button
-            onClick={onClose}
-            className="px-5 py-2.5 rounded-xl transition"
-            style={{ 
-              background: "#F5F0E8", 
-              color: "#0D5C45", 
-              fontSize: 13, 
-              fontWeight: 600, 
-              border: "1px solid #C8DDD0" 
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "#EBE5D9"}
-            onMouseLeave={e => e.currentTarget.style.background = "#F5F0E8"}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className="px-6 py-2.5 rounded-xl transition"
-            style={{ 
-              background: "#0D5C45", 
-              color: "#F5F0E8", 
-              fontSize: 13, 
-              fontWeight: 600, 
-              border: "none" 
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "#0a4a37"}
-            onMouseLeave={e => e.currentTarget.style.background = "#0D5C45"}
-          >
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function UpdateCard({ labelStyle }: { labelStyle: any }) {
+function UpdateCard() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [updateMsg, setUpdateMsg] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
   const handleUpdate = async () => {
+    setShowConfirm(false);
     setIsUpdating(true);
     setUpdateMsg({ text: "Update initiated... The application is restarting.", type: "info" });
     
@@ -585,72 +370,61 @@ function UpdateCard({ labelStyle }: { labelStyle: any }) {
 
   return (
     <>
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-        <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>System Update</p>
+      <div className="card card-premium shadow-sm mt-3">
+        <div className="card-header border-bottom-0 pb-0">
+          <h3 className="card-title">System Update</h3>
         </div>
-        <div className="p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <label style={labelStyle}>Maintain Application</label>
-              <p style={{ fontSize: 13, color: "#4A7C65" }}>
+        <div className="card-body py-4">
+          <div className="row align-items-center g-3">
+            <div className="col">
+              <p className="text-muted mb-0">
                 Pull the latest version of apiPy directly from GitHub and restart the system service.
               </p>
             </div>
-            <button
-              onClick={() => setShowConfirm(true)}
-              disabled={isUpdating}
-              className="flex items-center gap-2 px-6 py-2 rounded-xl transition shrink-0"
-              style={{
-                background: "#0D5C45",
-                color: "#F5F0E8",
-                fontSize: 13,
-                fontWeight: 600,
-                border: "none",
-                cursor: isUpdating ? "not-allowed" : "pointer"
-              }}
-              onMouseEnter={e => !isUpdating && (e.currentTarget.style.background = "#0a4a37")}
-              onMouseLeave={e => !isUpdating && (e.currentTarget.style.background = "#0D5C45")}
-            >
-              {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              {isUpdating ? "Updating..." : "Update Now"}
-            </button>
+            <div className="col-md-auto">
+              <button
+                onClick={() => setShowConfirm(true)}
+                disabled={isUpdating}
+                className="btn btn-primary d-flex align-items-center"
+              >
+                {isUpdating ? <IconLoader2 size={18} className="me-2 animate-spin" /> : <IconRefresh size={18} className="me-2" />}
+                <span className="fw-bold">{isUpdating ? "Updating..." : "Update Now"}</span>
+              </button>
+            </div>
           </div>
 
           {updateMsg && (
-            <div style={{
-              fontSize: 13,
-              marginTop: 15,
-              padding: "10px 12px",
-              borderRadius: 10,
-              background: updateMsg.type === "success" ? "#DCFCE7" : updateMsg.type === "info" ? "#DBEAFE" : "#FEE2E2",
-              color: updateMsg.type === "success" ? "#166534" : updateMsg.type === "info" ? "#1E40AF" : "#991B1B",
-              border: updateMsg.type === "success" ? "1px solid #BBF7D0" : updateMsg.type === "info" ? "1px solid #BFDBFE" : "1px solid #FCA5A5"
-            }}>
-              {updateMsg.text}
+            <div className={`alert alert-${updateMsg.type === 'error' ? 'danger' : updateMsg.type} mt-4 mb-0`} role="alert">
+              <div className="d-flex align-items-center">
+                {updateMsg.type === 'success' ? <IconCircleCheck className="me-2" /> : updateMsg.type === 'error' ? <IconX className="me-2" /> : <IconInfoCircle className="me-2" />}
+                <div>{updateMsg.text}</div>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      <ConfirmDialog 
+      <ConfirmationDialog
         isOpen={showConfirm}
         onClose={() => setShowConfirm(false)}
         onConfirm={handleUpdate}
         title="Confirm System Update"
-        message="This will download the latest version from GitHub and restart the service. You will be disconnected for a few moments. Continue?"
+        description="This will download the latest version from GitHub and restart the service. You will be disconnected for a few moments. Continue?"
+        confirmText="Update Now"
+        variant="warning"
       />
     </>
   );
 }
 
-function DebugCard({ inputStyle, labelStyle }: { inputStyle: any; labelStyle: any }) {
+function DebugCard() {
   const [port, setPort] = useState("");
   const [isKilling, setIsKilling] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [debugMsg, setDebugMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const handleKillPort = async () => {
+    setShowConfirm(false);
     setIsKilling(true);
     setDebugMsg(null);
     try {
@@ -664,81 +438,54 @@ function DebugCard({ inputStyle, labelStyle }: { inputStyle: any; labelStyle: an
     }
   };
 
-  const onBtnClick = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!port || isNaN(Number(port))) {
-      setDebugMsg({ text: "Please enter a valid port number", type: "error" });
-      return;
-    }
-    setShowConfirm(true);
-  };
-
   return (
     <>
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #D6E8DC" }}>
-        <div className="px-5 py-4" style={{ borderBottom: "1px solid #D6E8DC" }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#0D5C45" }}>Debug Tools</p>
+      <div className="card card-premium shadow-sm">
+        <div className="card-header">
+          <h3 className="card-title">Debug Tools</h3>
         </div>
-        <div className="p-5">
-          <form onSubmit={onBtnClick} className="flex flex-col gap-5">
-            <div>
-              <label style={labelStyle}>Kill Process by Port</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="e.g. 8080"
-                  value={port}
-                  onChange={e => setPort(e.target.value)}
-                  disabled={isKilling}
-                  style={{ ...inputStyle, flex: 1 }}
-                  onFocus={e => e.target.style.borderColor = "#00C853"}
-                  onBlur={e => e.target.style.borderColor = "#C8DDD0"}
-                />
-                <button
-                  type="submit"
-                  disabled={isKilling}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl transition"
-                  style={{
-                    background: "#0D5C45",
-                    color: "#F5F0E8",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    border: "none",
-                    cursor: isKilling ? "not-allowed" : "pointer"
-                  }}
-                  onMouseEnter={e => !isKilling && (e.currentTarget.style.background = "#0a4a37")}
-                  onMouseLeave={e => !isKilling && (e.currentTarget.style.background = "#0D5C45")}
-                >
-                  {isKilling ? <Loader2 size={14} className="animate-spin" /> : "Kill Port"}
-                </button>
-              </div>
-              <p style={{ fontSize: 12, color: "#4A7C65", marginTop: 8 }}>
-                Force-terminate any process using this port. Use with caution.
-              </p>
-            </div>
+        <div className="card-body">
+          <label className="form-label">Kill Process by Port</label>
+          <div className="input-group">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. 8080"
+              value={port}
+              onChange={e => setPort(e.target.value)}
+              disabled={isKilling}
+            />
+            <button
+              onClick={() => {
+                if (!port || isNaN(Number(port))) return;
+                setShowConfirm(true);
+              }}
+              disabled={isKilling || !port}
+              className="btn btn-outline-danger"
+            >
+              {isKilling ? <IconLoader2 size={16} className="animate-spin" /> : "Kill Port"}
+            </button>
+          </div>
+          <div className="form-hint mt-2 text-danger">
+            Force-terminate any process using this port. Use with caution.
+          </div>
 
-            {debugMsg && (
-              <div style={{
-                fontSize: 13,
-                padding: "10px 12px",
-                borderRadius: 10,
-                background: debugMsg.type === "success" ? "#DCFCE7" : "#FEE2E2",
-                color: debugMsg.type === "success" ? "#166534" : "#991B1B",
-                border: debugMsg.type === "success" ? "1px solid #BBF7D0" : "1px solid #FCA5A5"
-              }}>
-                {debugMsg.text}
-              </div>
-            )}
-          </form>
+          {debugMsg && (
+            <div className={`alert alert-${debugMsg.type === 'error' ? 'danger' : 'success'} mt-3 mb-0`} role="alert">
+              {debugMsg.text}
+            </div>
+          )}
         </div>
       </div>
 
-      <ConfirmDialog 
+      <ConfirmationDialog
         isOpen={showConfirm}
         onClose={() => setShowConfirm(false)}
         onConfirm={handleKillPort}
         title="Kill Process"
-        message={`Are you sure you want to absolute kill the process on port ${port}? This action cannot be undone.`}
+        description={`Are you sure you want to absolute kill the process on port ${port}? This action cannot be undone.`}
+        confirmText="Confirm Kill"
+        variant="danger"
       />
     </>
   );
